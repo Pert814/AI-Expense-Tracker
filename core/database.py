@@ -44,7 +44,7 @@ if __name__ == "__main__":
         "date": "2026-01-19",
         "note": "Unit test record"
     }
-    success, result = db_client.add_record("test_expenses", test_data)
+    success, result = db_client.add_record("database_test", test_data)
     
     if success:
         print(f"🎉 Success! Document ID: {result}")
