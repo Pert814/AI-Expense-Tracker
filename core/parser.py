@@ -1,65 +1,64 @@
 import os
-import json
 from datetime import datetime
-import google.generativeai as genai
+from google import genai
+from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# 定義模型輸出格式
+class ExpenseData(BaseModel):
+    item: str
+    amount: float
+    date: str
+    note: str
+
 class GeminiParser:
+    # 初始化新的 Google Gemini 客户端
     def __init__(self):
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("❌ Error: GEMINI_API_KEY not found in .env")
-        
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        self.client = genai.Client(api_key=api_key)
+        self.model_id = "gemini-2.5-flash"
 
+    # 輸入文本method
     def parse_text(self, user_input: str):
-        """Parse natural language into structured JSON via Gemini"""
+        """Parse text using the new google-genai SDK"""
         today_date = datetime.now().strftime("%Y-%m-%d")
 
-        # Instruction for the AI
         prompt = f"""
-        You are a professional expense tracking assistant. Today's date is {today_date}.
-        Extract the following fields from the user input: item, amount, date, and note.
-
-        Rules:
-        1. Format the 'date' as "YYYY-MM-DD".
-        2. If the user says "yesterday" or "day before yesterday", calculate the date based on {today_date}.
-        3. If no date is mentioned, default to today ({today_date}).
-        4. The 'amount' must be a number.
-        5. If there is no note, use an empty string "".
-
-        Return ONLY a JSON object:
-        {{
-            "item": "item name",
-            "amount": number,
-            "date": "YYYY-MM-DD",
-            "note": "any additional info"
-        }}
-
+        Today's date is {today_date}.
+        Extract the expense details: item, amount, date (YYYY-MM-DD), and note.
+        If the user says 'yesterday', calculate based on {today_date}.
         User input: "{user_input}"
         """
-
+        # 進行解析並限制輸出格式
         try:
-            response = self.model.generate_content(prompt)
-            clean_json = response.text.strip().replace('```json', '').replace('```', '')
-            data = json.loads(clean_json)
-            data['amount'] = float(data['amount'])
-            return True, data
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=prompt,
+                config={
+                    'response_mime_type': 'application/json',
+                    'response_schema': ExpenseData,
+                }
+            )
+            result = response.parsed.model_dump()
+            return True, result
+            
         except Exception as e:
-            return False, f"AI Parsing Error: {str(e)}"
+            return False, f"New SDK Parsing Error: {str(e)}"
 
 expense_parser = GeminiParser()
 
+# 以下為測試代碼
 if __name__ == "__main__":
-    print(f"--- Starting AI Parser Test (Base Date: {datetime.now().strftime('%Y-%m-%d')}) ---")
-    test_text = "Bought a 45 dollar latte at 7-11 yesterday"
+    print(f"--- Starting New SDK Parser Test ({datetime.now().strftime('%Y-%m-%d')}) ---")
+    test_text = "Coffee for 150 dollars yesterday"
     success, result = expense_parser.parse_text(test_text)
     
     if success:
-        print("✅ Parsing Successful:")
-        print(json.dumps(result, indent=4))
+        print("✅ Parsing Successful with New SDK:")
+        print(result)
     else:
         print(f"❌ Parsing Failed: {result}")
