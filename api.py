@@ -37,6 +37,7 @@ async def add_expense(request: ExpenseRequest): # 用async def來避免同時等
         "message": "Expense recorded successfully!",
     }
 
+# 以下測試代碼
 if __name__ == "__main__":
     import uvicorn
     print("🚀 API Server starting...")
