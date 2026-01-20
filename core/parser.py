@@ -20,7 +20,7 @@ class GeminiParser:
         if not api_key:
             raise ValueError("❌ Error: GEMINI_API_KEY not found in .env")
         self.client = genai.Client(api_key=api_key)
-        self.model_id = "gemini-2.5-flash"
+        self.model_id = "gemini-2.5-flash-lite"
 
     # 輸入文本method
     def parse_text(self, user_input: str):

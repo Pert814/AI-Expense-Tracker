@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Database:
+    # 初始化 Firebase database連接
     def __init__(self):
-        """Initialize Firebase connection"""
         if not firebase_admin._apps:
             config_str = os.getenv('FIREBASE_CONFIG')
             if not config_str:
@@ -25,8 +25,8 @@ class Database:
 
         self.db = firestore.client()
 
+    # 新增紀錄method
     def add_record(self, collection_name, data):
-        """Generic method to add data to Firestore"""
         try:
             data['created_at'] = firestore.SERVER_TIMESTAMP
             _, doc_ref = self.db.collection(collection_name).add(data)
@@ -36,6 +36,7 @@ class Database:
 
 db_client = Database()
 
+# 以下為測試代碼
 if __name__ == "__main__":
     print("\n--- Starting Database Connection Test ---")
     test_data = {
