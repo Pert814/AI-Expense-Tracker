@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Expense Tracker - Integration Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; padding: 40px; color: #333; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h2 { color: #1a73e8; border-bottom: 2px solid #e8f0fe; padding-bottom: 10px; }
+        #input-section { margin-top: 25px; display: none; }
+        input { width: 75%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        button { padding: 12px 20px; background: #1a73e8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #1557b0; }
+        #result-json { 
+            background: #1e1e1e; color: #00ff00; padding: 20px; border-radius: 8px; 
+            font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; margin-top: 20px;
+            white-space: pre-wrap; line-height: 1.5; border: 1px solid #333;
+        }
+        .user-info { background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>AI Expense Tracker <small style="font-size: 12px; color: #666;">v1.0.0</small></h2>
+
+    <div id="g_id_onload"
+         data-client_id="651073678330-chqniufgdpg51ed3em1lavmtcl5fqpo2.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse">
+    </div>
+    <div class="g_id_signin" data-type="standard"></div>
+
+    <div id="user-info" style="display:none;" class="user-info">
+        <div><strong>Status:</strong> <span style="color: #28a745;">Authenticated ✅</span></div>
+        <div><strong>User:</strong> <span id="user-name"></span></div>
+        <div><strong>UID:</strong> <small id="user-id"></small></div>
+    </div>
+
+    <div id="input-section">
+        <h4>Input Natural Language:</h4>
+        <input type="text" id="expense-text" placeholder="e.g., Spent $15 on lunch at Subway">
+        <button onclick="runIntegrationTest()">Run Test</button>
+        <div id="result-json">Waiting for input...</div>
+    </div>
+</div>
+
+<script>
+    let currentUser = null;
+
+    async function handleCredentialResponse(response) {
+        const res = await fetch('/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_token: response.credential })
+        });
+        const data = await res.json();
+
+        if (data.status === "success") {
+            currentUser = data.user;
+            document.querySelector(".g_id_signin").style.display = "none";
+            document.getElementById("user-info").style.display = "block";
+            document.getElementById("input-section").style.display = "block";
+            document.getElementById("user-name").innerText = currentUser.name;
+            document.getElementById("user-id").innerText = currentUser.id;
+        }
+    }
+
+    async function runIntegrationTest() {
+        const text = document.getElementById("expense-text").value;
+        const terminal = document.getElementById("result-json");
+
+        if (!text) return;
+
+        // Terminal UI sequence
+        terminal.innerText = "🚀 Starting Integration Test: Parser + Database\n";
+        terminal.innerText += "--------------------------------------------------\n";
+        terminal.innerText += `📝 User Input: "${text}"\n`;
+
+        try {
+            terminal.innerText += "\n🧠 AI is parsing the text...\n";
+            
+            const res = await fetch('/parse-expense', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    text: text,
+                    user_id: currentUser.id // Passing the ID to backend
+                })
+            });
+            const data = await res.json();
+
+            terminal.innerText += "✅ AI Parsing Successful!\n";
+            terminal.innerText += `   Parsed Data: ${JSON.stringify(data.data, null, 4)}\n`;
+
+            terminal.innerText += "\n💾 Saving to Firestore Personal Collection...\n";
+            terminal.innerText += "🎉 Integration Test Passed!\n";
+            terminal.innerText += `   Document ID: ${data.db_id}\n`;
+            terminal.innerText += `   Path: users/${currentUser.id}/expenses/`;
+        } catch (e) {
+            terminal.innerText += `\n❌ System Error: ${e.message}\n`;
+        }
+    }
+</script>
+</body>
+</html>

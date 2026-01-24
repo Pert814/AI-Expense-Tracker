@@ -26,10 +26,12 @@ class Database:
         self.db = firestore.client()
 
     # 新增紀錄method
-    def add_record(self, collection_name, data):
+    def add_user_record(self, user_id, data):
         try:
+            data['user_id'] = user_id
             data['created_at'] = firestore.SERVER_TIMESTAMP
-            _, doc_ref = self.db.collection(collection_name).add(data)
+            collection_path = f"users/{user_id}/expenses"
+            _, doc_ref = self.db.collection(collection_path).add(data)
             return True, doc_ref.id
         except Exception as e:
             return False, str(e)
