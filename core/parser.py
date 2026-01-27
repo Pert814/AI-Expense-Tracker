@@ -12,6 +12,7 @@ class ExpenseData(BaseModel):
     amount: float
     date: str
     note: str
+    category: str
 
 class GeminiParser:
     # 初始化新的 Google Gemini 客户端
@@ -22,15 +23,15 @@ class GeminiParser:
         self.client = genai.Client(api_key=api_key)
         self.model_id = "gemini-2.5-flash-lite"
 
-    # 輸入文本method
-    def parse_text(self, user_input: str):
-        """Parse text using the new google-genai SDK"""
+    # method for AI to parse text
+    def parse_text(self, user_input: str, categories: list = None):
+        # get today's date for AI to not being silly
         today_date = datetime.now().strftime("%Y-%m-%d")
-
         prompt = f"""
         Today's date is {today_date}.
-        Extract the expense details: item, amount, date (YYYY-MM-DD), and note.
+        Extract the expense details: item, amount, date (YYYY-MM-DD), note, and category.
         If the user says 'yesterday', calculate based on {today_date}.
+        For category, choose the one that best fits from this list: {', '.join(categories)}. 
         User input: "{user_input}"
         """
         # 進行解析並限制輸出格式

@@ -8,21 +8,21 @@ from core.database import db_client
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-
-# 初始化 FastAPI 應用
+# Initialize FastAPI application
 app = FastAPI(
     title="AI Expense Tracker API",
     description="An AI-powered API that parses natural language into structured expense records.",
     version="1.0.0"
 )
 
-# 定義 Token 接收格式
+# read GOOGLE_CLIENT_ID from .env
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
+# Token request model
 class TokenBody(BaseModel):
     id_token: str
 
-# 定義請求資料模型
+# Expense request model
 class ExpenseRequest(BaseModel):
     text: str
     user_id: Optional[str] = "guest"
@@ -46,6 +46,9 @@ async def google_auth(body: TokenBody):
 
         print(f"✅ 使用者已登入: {name} ({email})")
 
+        # Check and initialize user data in Firestore
+        db_client.check_user_exists(user_id, email, name)
+
         return {
             "status": "success",
             "user": {"id": user_id, "name": name, "email": email}
@@ -56,7 +59,9 @@ async def google_auth(body: TokenBody):
 @app.post("/parse-expense")
 async def create_expense(request: ExpenseRequest):
 
-    success, parsed_data = expense_parser.parse_text(request.text)
+    # get user categories from firestore and pass user input and categories to parser
+    user_categories = db_client.get_user_categories(request.user_id)
+    success, parsed_data = expense_parser.parse_text(request.text, categories=user_categories)
     if not success:
         raise HTTPException(status_code=500, detail=f"AI Parsing Error: {parsed_data}")
     # for frontend to parse the data
@@ -110,7 +115,7 @@ async def delete_user_data(user_id: str, record_id: str):
         "status": "success",
         "message": "Record deleted successfully"
     }
-# 以下測試代碼
+
 if __name__ == "__main__":
     import uvicorn
     print("🚀 API Server starting...")

@@ -25,6 +25,38 @@ class Database:
 
         self.db = firestore.client()
 
+    
+    # Check if user exists, if not create user document with default fields
+    def check_user_exists(self, user_id, email, name):
+        try:
+            user_ref = self.db.collection("users").document(user_id)
+            doc = user_ref.get()
+            
+            if not doc.exists:
+                print(f"[INFO] New user detected: {user_id}. Initializing...")
+                user_ref.set({
+                    "email": email,
+                    "name": name,
+                    "created_at": firestore.SERVER_TIMESTAMP,
+                    "categories": ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Other"] # Default categories
+                })
+                return True, "User initialized"
+            user_data = doc.to_dict()
+            return True, "User exists"
+        except Exception as e:
+            return False, str(e)
+
+    # method to get user categories
+    def get_user_categories(self, user_id):
+        try:
+            user_ref = self.db.collection("users").document(user_id)
+            doc = user_ref.get()
+            if doc.exists:
+                return doc.to_dict().get("categories", [])
+            return []
+        except Exception:
+            return []
+
     # method to create user record
     def create_user_record(self, user_id, data):
         try:
@@ -63,6 +95,7 @@ class Database:
             return True, "Record deleted successfully"
         except Exception as e:
             return False, str(e)
+            
 
 db_client = Database()
 

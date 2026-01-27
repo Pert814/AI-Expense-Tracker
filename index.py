@@ -1,49 +1,49 @@
 from core.database import Database
-import json
+from core.parser import expense_parser # Import parser to test it
 
 def main():
-    print("--- Starting Database Logic Test in index.py ---")
+    print("--- Starting Dynamic Category Test in index.py ---")
     
     # Initialize Database
     try:
         db = Database()
-        print("✅ Database connection initialized.")
+        print("[INFO] Database connection initialized.")
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
+        print(f"[ERROR] Database connection failed: {e}")
         return
 
-    # User ID to test
-    user_id = "test_user_001"
+    # User ID to test (New User)
+    user_id = "test_user_new_002"
 
-    # 1. Test Add (Adding a new record to ensure we have data)
-    print(f"\n[1] Testing add_user_record for user: {user_id}...")
-    record_data = {
-        "item": "Test Item for Get Test",
-        "amount": 100,
-        "category": "Testing",
-        "note": "Verifying get_user_record functionality"
-    }
+    # 1. Test Get User Categories
+    print(f"\n[1] Testing get_user_categories for user: {user_id}...")
+    cats = db.get_user_categories(user_id)
+    print(f"  Categories found: {cats}")
     
-    success, result = db.add_user_record(user_id, record_data)
-
-    if success:
-        print(f"  ✅ Add Success! Document ID: {result}")
+    if not cats:
+        print("  [WARN] No categories found (User might not exist yet). Run previous test to create user.")
     else:
-        print(f"  ❌ Add Failed! Error: {result}")
+        print("  [SUCCESS] Categories retrieved.")
 
-    # 2. Test Get
-    print(f"\n[2] Testing get_user_record for user: {user_id}...")
-    success, records = db.get_user_record(user_id)
+    # 2. Test Parser with Custom Categories
+    print(f"\n[2] Testing parser with custom categories...")
+    custom_cats = ["Tech", "Food", "Travel"]
+    test_input = "Bought a new mouse for $50"
+    print(f"  Input: '{test_input}'")
+    print(f"  Custom Categories: {custom_cats}")
+    
+    success, result = expense_parser.parse_text(test_input, categories=custom_cats)
     
     if success:
-        print(f"  ✅ Get Success! Found {len(records)} records.")
-        print("  --- Records Preview ---")
-        # Print all records
-        for i, rec in enumerate(records):
-            # Print cleanly
-            print(f"  📄 Record {i+1}: {rec}")
+        print("  [SUCCESS] Parse Result:")
+        print(f"  Category: {result.get('category')}")
+        print(f"  Full: {result}")
+        if result.get('category') in custom_cats:
+             print("  [SUCCESS] Category matches one of the custom categories!")
+        else:
+             print(f"  [WARN] Category '{result.get('category')}' is not in custom list (Gemini generated meaningful new one?).")
     else:
-        print(f"  ❌ Get Failed! Error: {records}")
+        print(f"  [FAIL] Parsing failed: {result}")
 
 if __name__ == "__main__":
     main()
