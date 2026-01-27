@@ -27,12 +27,11 @@ class ExpenseRequest(BaseModel):
     text: str
     user_id: Optional[str] = "guest"
 
-# 首頁載入 index.html
+#index.html (temporary)
 @ app.get("/")
 def home():
     return FileResponse("index.html")
-
-# Google 登入驗證端點
+# Google auth endpoint
 @app.post("/auth/google")
 async def google_auth(body: TokenBody):
     try:
@@ -53,19 +52,18 @@ async def google_auth(body: TokenBody):
         }
     except ValueError:
         raise HTTPException(status_code=401, detail="Google Token 驗證失敗")
-
-# 費用解析端點
+# Create expense endpoint
 @app.post("/parse-expense")
-async def add_expense(request: ExpenseRequest):
+async def create_expense(request: ExpenseRequest):
 
     success, parsed_data = expense_parser.parse_text(request.text)
     if not success:
         raise HTTPException(status_code=500, detail=f"AI Parsing Error: {parsed_data}")
-    
-    # 存入伺服器時會新增 firestore.SERVER_TIMESTAMP 欄位導致前端無法解析
+    # for frontend to parse the data
+    # 存入firebase時會新增 firestore.SERVER_TIMESTAMP 欄位導致前端無法解析
     return_data = parsed_data.copy()
 
-    db_success, db_result = db_client.add_user_record(request.user_id, parsed_data)
+    db_success, db_result = db_client.create_user_record(request.user_id, parsed_data)
     
     if not db_success:
         raise HTTPException(status_code=500, detail=f"Database Error: {db_result}")
@@ -76,7 +74,42 @@ async def add_expense(request: ExpenseRequest):
         "data": return_data, 
         "db_id": db_result   
     }
-
+# Read user data endpoint
+@app.get("/user-data/{user_id}")
+async def read_user_data(user_id: str):
+    success, result = db_client.read_user_record(user_id)
+    
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Database Error: {result}")
+    
+    return {
+        "status": "success",
+        "data": result
+    }
+# update user data endpoint
+@app.put("/user-data/{user_id}/{record_id}")
+async def update_user_data(user_id: str, record_id: str, data: dict):
+    success, result = db_client.update_user_record(user_id, record_id, data)
+    
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Database Error: {result}")
+    
+    return {
+        "status": "success",
+        "message": "Record updated successfully"
+    }
+# delete user data endpoint
+@app.delete("/user-data/{user_id}/{record_id}")
+async def delete_user_data(user_id: str, record_id: str):
+    success, result = db_client.delete_user_record(user_id, record_id)
+    
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Database Error: {result}")
+    
+    return {
+        "status": "success",
+        "message": "Record deleted successfully"
+    }
 # 以下測試代碼
 if __name__ == "__main__":
     import uvicorn

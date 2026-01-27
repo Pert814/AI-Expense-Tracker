@@ -18,21 +18,49 @@ class Database:
                 cred_dict = json.loads(config_str)
                 cred = credentials.Certificate(cred_dict)
                 firebase_admin.initialize_app(cred)
-                print("✅ Firebase initialized successfully")
+                print("[INFO] Firebase initialized successfully")
             except Exception as e:
-                print(f"❌ Firebase initialization failed: {e}")
+                print(f"[ERROR] Firebase initialization failed: {e}")
                 raise
 
         self.db = firestore.client()
 
-    # 新增紀錄method
-    def add_user_record(self, user_id, data):
+    # method to create user record
+    def create_user_record(self, user_id, data):
         try:
-            data['user_id'] = user_id
             data['created_at'] = firestore.SERVER_TIMESTAMP
-            collection_path = f"users/{user_id}/expenses"
+            collection_path = f"users/{user_id}/expenses" 
             _, doc_ref = self.db.collection(collection_path).add(data)
             return True, doc_ref.id
+        except Exception as e:
+            return False, str(e)
+
+    # method to read user records
+    def read_user_record(self, user_id):
+        try:
+            collection_path = f"users/{user_id}/expenses"
+            docs = self.db.collection(collection_path).stream() # docs : <class 'generator'>
+            # Use for loop to run the generator from "stream()"
+            records = []
+            for doc in docs:
+                records.append(doc.to_dict())
+            return True, records
+        except Exception as e:
+            return False, str(e)
+    # method to update user record
+    def update_user_record(self, user_id, record_id, data):
+        try:
+            collection_path = f"users/{user_id}/expenses"
+            self.db.collection(collection_path).document(record_id).update(data)
+            return True, "Record updated successfully"
+        except Exception as e:
+            return False, str(e)
+    # method to delete user record
+    def delete_user_record(self, user_id, record_id):
+        try:
+            collection_path = f"users/{user_id}/expenses"
+            self.db.collection(collection_path).document(record_id).delete()
+            return True, "Record deleted successfully"
         except Exception as e:
             return False, str(e)
 
