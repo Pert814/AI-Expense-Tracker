@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
 import os
@@ -15,6 +14,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Add CORS Middleware for Vite(different port) to connect to API
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite default port
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # read GOOGLE_CLIENT_ID from .env
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
@@ -27,10 +37,6 @@ class ExpenseRequest(BaseModel):
     text: str
     user_id: Optional[str] = "guest"
 
-#index.html (temporary)
-@ app.get("/")
-def home():
-    return FileResponse("index.html")
 # Google auth endpoint
 @app.post("/auth/google")
 async def google_auth(body: TokenBody):

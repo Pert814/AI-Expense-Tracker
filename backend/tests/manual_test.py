@@ -1,5 +1,11 @@
-from core.database import Database
-from core.parser import expense_parser # Import parser to test it
+import sys
+import os
+
+# Add backend directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app.core.database import Database
+from app.core.parser import expense_parser # Import parser to test it
 
 def main():
     print("--- Starting Dynamic Category Test in index.py ---")
