@@ -1,16 +1,13 @@
 import { GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 
+// Login component for Google OAuth
 function Login({ onLoginSuccess }) {
     const handleSuccess = async (response) => {
         console.log('Google Login Success:', response);
         const idToken = response.credential;
-
+        // temporary store user info in localStorage
         try {
-            // 這裡可以選擇是否要發送到後端驗證，或者先在前端存起來
-            // 為了「不頻繁登入」，我們先存入 localStorage
-
-            // 解析 JWT (不驗證，只是為了拿使用者姓名/Email 顯示)
             const base64Url = idToken.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
@@ -43,7 +40,7 @@ function Login({ onLoginSuccess }) {
             color: 'white'
         }}>
             <h1>AI Expense Tracker</h1>
-            <p>請先登入以開始管理你的收支</p>
+            <p>Please log in to start managing your expenses</p>
             <div style={{ marginTop: '20px' }}>
                 <GoogleLogin
                     onSuccess={handleSuccess}

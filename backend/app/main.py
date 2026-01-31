@@ -50,7 +50,7 @@ async def google_auth(body: TokenBody):
         email = idinfo.get('email')
         name = idinfo.get('name')
 
-        print(f"✅ 使用者已登入: {name} ({email})")
+        print(f"✅ Google Auth Success: {name} ({email})")
 
         # Check and initialize user data in Firestore
         db_client.check_user_exists(user_id, email, name)
@@ -122,9 +122,11 @@ async def delete_user_data(user_id: str, record_id: str):
         "message": "Record deleted successfully"
     }
 
-# 測試用例句:
+# test case
 # 1. I spent 50 dollars on groceries yesterday.
 # 2. Bought a new laptop for 1200 USD last week.
 # 3. Spent 15 bucks on coffee this morning.
 # 4. Paid 200 dollars for car maintenance two days ago.
+# 5. Yesterday, I spent 100 dollars on a new phone.
+
 

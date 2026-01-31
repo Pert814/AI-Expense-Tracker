@@ -8,7 +8,9 @@ const GOOGLE_CLIENT_ID = "651073678330-chqniufgdpg51ed3em1lavmtcl5fqpo2.apps.goo
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+  {/* functional renderless component*/}
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      {/* -> App.jsx  */}
       <App />
     </GoogleOAuthProvider>
   </StrictMode>,

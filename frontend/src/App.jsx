@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import Login from './components/Login'
+import ExpenseInput from './components/ExpenseInput'
 
 function App() {
   const [user, setUser] = useState(null)
 
+  // check localStorage for user info
   useEffect(() => {
-    // 初始化時檢查 localStorage 是否有使用者資訊
     const savedUser = localStorage.getItem('user')
     if (savedUser) {
       setUser(JSON.parse(savedUser))
     }
   }, [])
-
+  // logout function 
   const handleLogout = () => {
     localStorage.removeItem('user')
     localStorage.removeItem('token')
@@ -22,19 +23,22 @@ function App() {
   if (!user) {
     return <Login onLoginSuccess={(userData) => setUser(userData)} />
   }
-
+  // after login, show app main page
   return (
     <div className="app-container">
       <nav style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#eee' }}>
-        <span>你好, {user.name}</span>
-        <button onClick={handleLogout}>登出</button>
+        <span>Hello, {user.name}</span>
+        <button onClick={handleLogout}>Logout</button>
       </nav>
 
       <main style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>歡迎來到 AI 收支管理系統</h1>
-        <p>你的 Email: {user.email}</p>
-        <div className="card">
-          <p>這裡之後會顯示你的收支圖表與紀錄</p>
+        <h1>Welcome to AI Expense Tracker</h1>
+        <p>Your Email: {user.email}</p>
+
+        <ExpenseInput userId={user.sub} />
+
+        <div className="card" style={{ marginTop: '30px' }}>
+          <p>Future charts and history will be here</p>
         </div>
       </main>
     </div>
