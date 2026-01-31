@@ -2,8 +2,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import os
-from core.parser import expense_parser
-from core.database import db_client
+from app.core.parser import expense_parser
+from app.core.database import db_client
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
@@ -28,7 +28,7 @@ app.add_middleware(
 # read GOOGLE_CLIENT_ID from .env
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
-# Token request model
+# GOOGLE_CLIENT_ID Token request model
 class TokenBody(BaseModel):
     id_token: str
 
@@ -42,11 +42,11 @@ class ExpenseRequest(BaseModel):
 async def google_auth(body: TokenBody):
     try:
         idinfo = id_token.verify_oauth2_token(
-            body.id_token, 
+            body.id_token,  # The user get this token after login in Google
             requests.Request(), 
             GOOGLE_CLIENT_ID
         )
-        user_id = idinfo['sub']  # Google 唯一用戶 ID
+        user_id = idinfo['sub']  # Google unique user ID
         email = idinfo.get('email')
         name = idinfo.get('name')
 
@@ -85,7 +85,7 @@ async def create_expense(request: ExpenseRequest):
         "data": return_data, 
         "db_id": db_result   
     }
-# Read user data endpoint
+# Read expense from user endpoint
 @app.get("/user-data/{user_id}")
 async def read_user_data(user_id: str):
     success, result = db_client.read_user_record(user_id)
@@ -97,7 +97,7 @@ async def read_user_data(user_id: str):
         "status": "success",
         "data": result
     }
-# update user data endpoint
+# update expense from user endpoint
 @app.put("/user-data/{user_id}/{record_id}")
 async def update_user_data(user_id: str, record_id: str, data: dict):
     success, result = db_client.update_user_record(user_id, record_id, data)
@@ -109,7 +109,7 @@ async def update_user_data(user_id: str, record_id: str, data: dict):
         "status": "success",
         "message": "Record updated successfully"
     }
-# delete user data endpoint
+# delete expense from user endpoint
 @app.delete("/user-data/{user_id}/{record_id}")
 async def delete_user_data(user_id: str, record_id: str):
     success, result = db_client.delete_user_record(user_id, record_id)
@@ -122,10 +122,6 @@ async def delete_user_data(user_id: str, record_id: str):
         "message": "Record deleted successfully"
     }
 
-if __name__ == "__main__":
-    import uvicorn
-    print("🚀 API Server starting...")
-    uvicorn.run(app, host="127.0.0.1", port=8000)
 # 測試用例句:
 # 1. I spent 50 dollars on groceries yesterday.
 # 2. Bought a new laptop for 1200 USD last week.
