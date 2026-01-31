@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import Login from './components/Login'
 import ExpenseInput from './components/ExpenseInput'
+import ExpenseList from './components/ExpenseList'
 
 function App() {
   const [user, setUser] = useState(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   // check localStorage for user info
   useEffect(() => {
@@ -35,10 +37,20 @@ function App() {
         <h1>Welcome to AI Expense Tracker</h1>
         <p>Your Email: {user.email}</p>
 
-        <ExpenseInput userId={user.sub} />
+        <ExpenseInput
+          userId={user.sub}
+          // when expense is added successfully, 
+          // refresh the list by setting the refreshTrigger to a new value
+          onSuccess={() => setRefreshTrigger(prev => prev + 1)}
+        />
+
+        <ExpenseList
+          userId={user.sub}
+          refreshTrigger={refreshTrigger}
+        />
 
         <div className="card" style={{ marginTop: '30px' }}>
-          <p>Future charts and history will be here</p>
+          <p>Future charts will be here</p>
         </div>
       </main>
     </div>

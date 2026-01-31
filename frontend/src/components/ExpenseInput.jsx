@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
-
-function ExpenseInput({ userId }) {
+// ExpenseInput component for submitting expenses via AI parsing
+function ExpenseInput({ userId, onSuccess }) {
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -9,7 +9,7 @@ function ExpenseInput({ userId }) {
 
     // Use environment variable for the API URL
     const API_BASE_URL = import.meta.env.VITE_API_URL;
-
+    // handle form submission after user click submit button
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!text.trim()) return;
@@ -17,7 +17,7 @@ function ExpenseInput({ userId }) {
         setLoading(true);
         setError(null);
         setResult(null);
-
+        // send user input to backend for AI parsing
         try {
             const response = await axios.post(`${API_BASE_URL}/parse-expense`, {
                 text: text,
@@ -27,6 +27,7 @@ function ExpenseInput({ userId }) {
             if (response.data.status === 'success') {
                 setResult(response.data.data);
                 setText(''); // Clear input
+                if (onSuccess) onSuccess(); // Signal other components to refresh
             }
         } catch (err) {
             console.error('Parsing error:', err);

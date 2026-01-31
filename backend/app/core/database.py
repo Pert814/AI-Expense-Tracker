@@ -75,7 +75,9 @@ class Database:
             # Use for loop to run the generator from "stream()"
             records = []
             for doc in docs:
-                records.append(doc.to_dict())
+                record = doc.to_dict()
+                record['id'] = doc.id # Include the Firestore document ID so that frontend can delete/update the record
+                records.append(record)
             return True, records
         except Exception as e:
             return False, str(e)
