@@ -71,10 +71,11 @@ function ExpenseInput({ userId, onSuccess }) {
             {result && (
                 <div style={{ marginTop: '20px', padding: '15px', background: '#e1f5fe', borderRadius: '8px', textAlign: 'left' }}>
                     <h4 style={{ margin: '0 0 10px 0', color: '#0288d1' }}>✅ Parse Successful!</h4>
+                    <p><strong>Item:</strong> {result.item}</p>
                     <p><strong>Amount:</strong> {result.amount} {result.currency}</p>
                     <p><strong>Category:</strong> {result.category}</p>
                     <p><strong>Date:</strong> {result.date}</p>
-                    <p><strong>Description:</strong> {result.description}</p>
+                    <p><strong>Note:</strong> {result.note}</p>
                 </div>
             )}
         </div>
