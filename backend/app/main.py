@@ -37,6 +37,12 @@ class ExpenseRequest(BaseModel):
     text: str
     user_id: Optional[str] = "guest"
 
+# User update request model
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    categories: Optional[list[str]] = None
+    currency: Optional[str] = None
+
 # Google auth endpoint
 @app.post("/auth/google")
 async def google_auth(body: TokenBody):
@@ -65,9 +71,21 @@ async def google_auth(body: TokenBody):
 @app.post("/parse-expense")
 async def create_expense(request: ExpenseRequest):
 
-    # get user categories from firestore and pass user input and categories to parser
-    user_categories = db_client.get_user_categories(request.user_id)
-    success, parsed_data = expense_parser.parse_text(request.text, categories=user_categories)
+    # get user settings from firestore
+    success, user_info = db_client.get_user_info(request.user_id)
+    if success:
+        user_categories = user_info.get("categories", [])
+        user_currency = user_info.get("currency", "USD")
+    else:
+        # Fallback if user document not found
+        user_categories = ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Other"]
+        user_currency = "USD"
+
+    success, parsed_data = expense_parser.parse_text(
+        request.text, 
+        categories=user_categories, 
+        default_currency=user_currency
+    )
     if not success:
         raise HTTPException(status_code=500, detail=f"AI Parsing Error: {parsed_data}")
     # for frontend to parse the data
@@ -118,8 +136,40 @@ async def delete_user_data(user_id: str, record_id: str):
         raise HTTPException(status_code=500, detail=f"Database Error: {result}")
     
     return {
+        "status": "success",        
+    }
+
+# Get user info endpoint
+@app.get("/user/{user_id}")
+async def get_user_info(user_id: str):
+    success, result = db_client.get_user_info(user_id)
+    
+    if not success:
+        status_code = 404 if result == "User not found" else 500
+        raise HTTPException(status_code=status_code, detail=f"Database Error: {result}")
+    
+    return {
         "status": "success",
-        "message": "Record deleted successfully"
+        "data": result
+    }
+
+# Update user info endpoint
+@app.put("/user/{user_id}")
+async def update_user_info(user_id: str, body: UserUpdate):
+    # Filter out None values to only update provided fields
+    update_data = {k: v for k, v in body.dict().items() if v is not None}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data provided for update")
+        
+    success, result = db_client.update_user_info(user_id, update_data)
+    
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Database Error: {result}")
+    
+    return {
+        "status": "success",
+        "message": "User information updated successfully"
     }
 
 # test case

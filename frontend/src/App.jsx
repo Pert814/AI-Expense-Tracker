@@ -4,11 +4,12 @@ import Login from './components/Login'
 import ExpenseInput from './components/ExpenseInput'
 import ExpenseList from './components/ExpenseList'
 import DailyExpenses from './components/DailyExpenses'
+import UserSettings from './components/UserSettings'
 
 function App() {
   const [user, setUser] = useState(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
-  const [currentView, setCurrentView] = useState('home') // 'home' or 'daily'
+  const [currentView, setCurrentView] = useState('home') // 'home', 'daily', or 'settings'
 
   // check localStorage for user info
   useEffect(() => {
@@ -22,6 +23,13 @@ function App() {
     localStorage.removeItem('user')
     localStorage.removeItem('token')
     setUser(null)
+  }
+
+  // update user name in state and localStorage
+  const handleUserUpdate = (updatedInfo) => {
+    const newUser = { ...user, name: updatedInfo.name }
+    setUser(newUser)
+    localStorage.setItem('user', JSON.stringify(newUser))
   }
 
   if (!user) {
@@ -48,12 +56,18 @@ function App() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <span>Hello, {user.name}</span>
+          <button
+            onClick={() => setCurrentView('settings')}
+            style={{ background: currentView === 'settings' ? '#4a90e2' : '#555', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            Settings
+          </button>
           <button onClick={handleLogout} style={{ background: '#ff4d4f', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Logout</button>
         </div>
       </nav>
 
       <main style={{ padding: '2rem', textAlign: 'center' }}>
-        {currentView === 'home' ? (
+        {currentView === 'home' && (
           <>
             <h1>Welcome to AI Expense Tracker</h1>
             <p>Your Email: {user.email}</p>
@@ -68,10 +82,21 @@ function App() {
               refreshTrigger={refreshTrigger}
             />
           </>
-        ) : (
+        )}
+
+        {currentView === 'daily' && (
           <>
             <h1>Daily Expense History</h1>
             <DailyExpenses userId={user.sub} />
+          </>
+        )}
+
+        {currentView === 'settings' && (
+          <>
+            <UserSettings
+              userId={user.sub}
+              onUpdateSuccess={handleUserUpdate}
+            />
           </>
         )}
       </main>

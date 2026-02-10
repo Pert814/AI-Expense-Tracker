@@ -3,6 +3,7 @@ from firebase_admin import credentials, firestore
 import os
 import json
 from dotenv import load_dotenv
+from app.core.models import ExpenseRecord
 
 load_dotenv()
 
@@ -38,7 +39,8 @@ class Database:
                     "email": email,
                     "name": name,
                     "created_at": firestore.SERVER_TIMESTAMP,
-                    "categories": ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Other"] # Default categories
+                    "categories": ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Other"], # Default categories
+                    "currency": "USD"
                 })
                 return True, "User initialized"
             user_data = doc.to_dict()
@@ -95,6 +97,28 @@ class Database:
             collection_path = f"users/{user_id}/expenses"
             self.db.collection(collection_path).document(record_id).delete()
             return True, "Record deleted successfully"
+        except Exception as e:
+            return False, str(e)
+
+    # method to get user info
+    def get_user_info(self, user_id):
+        try:
+            user_ref = self.db.collection("users").document(user_id)
+            doc = user_ref.get()
+            if doc.exists:
+                user_data = doc.to_dict()
+                user_data['id'] = doc.id
+                return True, user_data
+            return False, "User not found"
+        except Exception as e:
+            return False, str(e)
+
+    # method to update user info
+    def update_user_info(self, user_id, data):
+        try:
+            user_ref = self.db.collection("users").document(user_id)
+            user_ref.update(data)
+            return True, "User info updated successfully"
         except Exception as e:
             return False, str(e)
             
