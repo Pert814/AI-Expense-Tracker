@@ -43,6 +43,7 @@ function Login({ onLoginSuccess }) {
             <p>Please log in to start managing your expenses</p>
             <div style={{ marginTop: '20px' }}>
                 <GoogleLogin
+                    clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
                     onSuccess={handleSuccess}
                     onError={handleError}
                     useOneTap

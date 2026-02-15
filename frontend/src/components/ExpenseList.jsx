@@ -10,8 +10,12 @@ function ExpenseList({ userId, refreshTrigger }) {
 
     // method to fetch user data from backend endpoint
     const fetchExpenses = async () => {
-        if (!userId) return;
+        if (!userId) {
+            alert("User ID is missing");
+            return;
+        }
 
+        alert(`Fetching expenses for userId: ${userId}, API URL: ${API_BASE_URL}`);
         setLoading(true);
         try {
             const response = await axios.get(`${API_BASE_URL}/user-data/${userId}`);
@@ -20,6 +24,7 @@ function ExpenseList({ userId, refreshTrigger }) {
             }
         } catch (err) {
             console.error('Error fetching expenses:', err);
+            alert(`Failed to load expense history: ${err.message}`);
             setError('Failed to load expense history.');
         } finally {
             setLoading(false);

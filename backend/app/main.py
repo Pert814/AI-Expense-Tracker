@@ -19,8 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite default port
-    allow_credentials=True,
+    allow_origins=["*"],  # 臨時允許所有 origins 測試
+    allow_credentials=False,  # 當 allow_origins=["*"] 時，必須設為 False
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -106,11 +106,14 @@ async def create_expense(request: ExpenseRequest):
 # Read expense from user endpoint
 @app.get("/user-data/{user_id}")
 async def read_user_data(user_id: str):
+    print(f"[DEBUG] Received request for user_id: {user_id}")
     success, result = db_client.read_user_record(user_id)
     
     if not success:
+        print(f"[ERROR] Database error: {result}")
         raise HTTPException(status_code=500, detail=f"Database Error: {result}")
     
+    print(f"[DEBUG] Returning data for user_id: {user_id}, data: {result}")
     return {
         "status": "success",
         "data": result

@@ -31,6 +31,7 @@ function ExpenseInput({ userId, onSuccess }) {
             }
         } catch (err) {
             console.error('Parsing error:', err);
+            alert(`Failed to parse text: ${err.message}`);
             setError('Failed to parse text. Please ensure the backend server is running.');
         } finally {
             setLoading(false);
