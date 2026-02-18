@@ -26,13 +26,10 @@ class GeminiParser:
         today_date = datetime.now().strftime("%Y-%m-%d")
         prompt = f"""
         Today's date is {today_date}.
-        Extract the expense details: item, amount, date (YYYY-MM-DD), note, category, and currency.
-        If the user says 'yesterday', calculate based on {today_date}.
+        Extract the expense details: item, amount, date (YYYY-MM-DD), note, category and currency.
+        The date calculated based on today's date {today_date}.
         For category, choose the one that best fits from this list: {', '.join(categories)}.
-        For currency, follow these rules:
-        1. If the user explicitly mentions a currency (e.g., USD, TWD, dollars, bucks), extract that currency.
-        2. If NO currency is mentioned, use "{currency_to_use}" as the default currency.
-        
+        For currency, if not specified, use {currency_to_use}.
         User input: "{user_input}"
         """
         # 進行解析並限制輸出格式
@@ -46,6 +43,7 @@ class GeminiParser:
                 }
             )
             result = response.parsed.model_dump()
+            
             return True, result
             
         except Exception as e:

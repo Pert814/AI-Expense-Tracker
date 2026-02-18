@@ -4,6 +4,7 @@ from typing import Optional
 import os
 from app.core.parser import expense_parser
 from app.core.database import db_client
+from app.core.models import ExpenseRecord, UserUpdate, ParseRequestModel
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
@@ -19,8 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 臨時允許所有 origins 測試
-    allow_credentials=False,  # 當 allow_origins=["*"] 時，必須設為 False
+    allow_origins=["*"],  # Allow all origins for development; consider restricting in production
+    allow_credentials=False,  # CORS doesn't need to send cookies or auth headers
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -31,17 +32,6 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 # GOOGLE_CLIENT_ID Token request model
 class TokenBody(BaseModel):
     id_token: str
-
-# Expense request model
-class ExpenseRequest(BaseModel):
-    text: str
-    user_id: Optional[str] = "guest"
-
-# User update request model
-class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    categories: Optional[list[str]] = None
-    currency: Optional[str] = None
 
 # Google auth endpoint
 @app.post("/auth/google")
@@ -66,21 +56,18 @@ async def google_auth(body: TokenBody):
             "user": {"id": user_id, "name": name, "email": email}
         }
     except ValueError:
-        raise HTTPException(status_code=401, detail="Google Token 驗證失敗")
-# Create expense endpoint
-@app.post("/parse-expense")
-async def create_expense(request: ExpenseRequest):
+        raise HTTPException(status_code=401, detail="Google Token verification failed")
 
+# parse expense from gemini AI
+@app.post("/parse_expense")
+async def parse_expense(request: ParseRequestModel):
     # get user settings from firestore
     success, user_info = db_client.get_user_info(request.user_id)
-    if success:
-        user_categories = user_info.get("categories", [])
-        user_currency = user_info.get("currency", "USD")
-    else:
-        # Fallback if user document not found
-        user_categories = ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Other"]
-        user_currency = "USD"
-
+    if not success:
+        raise HTTPException(status_code=404, detail=f"User not found: {request.user_id}")
+    user_categories = user_info.get("categories", [])
+    user_currency = user_info.get("currency", "USD")
+    
     success, parsed_data = expense_parser.parse_text(
         request.text, 
         categories=user_categories, 
@@ -88,11 +75,15 @@ async def create_expense(request: ExpenseRequest):
     )
     if not success:
         raise HTTPException(status_code=500, detail=f"AI Parsing Error: {parsed_data}")
-    # for frontend to parse the data
-    # 存入firebase時會新增 firestore.SERVER_TIMESTAMP 欄位導致前端無法解析
-    return_data = parsed_data.copy()
-
-    db_success, db_result = db_client.create_user_record(request.user_id, parsed_data)
+    return{
+        "status": "success",
+        "data": parsed_data
+    }
+# Create expense in user's database record
+@app.post("/expense/create")
+async def create_expense_data(request: ExpenseRecord, user_id: str):
+    expense_data = request.model_dump()  # Convert Pydantic model to dict
+    db_success, db_result = db_client.create_user_record(user_id, expense_data)
     
     if not db_success:
         raise HTTPException(status_code=500, detail=f"Database Error: {db_result}")
@@ -100,12 +91,14 @@ async def create_expense(request: ExpenseRequest):
     return {
         "status": "success",
         "message": "Expense recorded to your personal account!",
-        "data": return_data, 
+        "user_id": user_id,
+        "data": expense_data, 
         "db_id": db_result   
     }
-# Read expense from user endpoint
-@app.get("/user-data/{user_id}")
-async def read_user_data(user_id: str):
+
+# Read expense from user
+@app.get("/expense/{user_id}")
+async def read_expense_data(user_id: str):
     print(f"[DEBUG] Received request for user_id: {user_id}")
     success, result = db_client.read_user_record(user_id)
     
@@ -118,9 +111,9 @@ async def read_user_data(user_id: str):
         "status": "success",
         "data": result
     }
-# update expense from user endpoint
-@app.put("/user-data/{user_id}/{record_id}")
-async def update_user_data(user_id: str, record_id: str, data: dict):
+# Update expense data from user 
+@app.put("/expense/{user_id}/{record_id}")
+async def update_expense_data(user_id: str, record_id: str, data: dict):
     success, result = db_client.update_user_record(user_id, record_id, data)
     
     if not success:
@@ -130,9 +123,9 @@ async def update_user_data(user_id: str, record_id: str, data: dict):
         "status": "success",
         "message": "Record updated successfully"
     }
-# delete expense from user endpoint
-@app.delete("/user-data/{user_id}/{record_id}")
-async def delete_user_data(user_id: str, record_id: str):
+# delete expense from user 
+@app.delete("/expense/{user_id}/{record_id}")
+async def delete_expense_data(user_id: str, record_id: str):
     success, result = db_client.delete_user_record(user_id, record_id)
     
     if not success:
@@ -142,8 +135,8 @@ async def delete_user_data(user_id: str, record_id: str):
         "status": "success",        
     }
 
-# Get user info endpoint
-@app.get("/user/{user_id}")
+# Get user information 
+@app.get("/user_data/{user_id}")
 async def get_user_info(user_id: str):
     success, result = db_client.get_user_info(user_id)
     
@@ -156,11 +149,12 @@ async def get_user_info(user_id: str):
         "data": result
     }
 
-# Update user info endpoint
-@app.put("/user/{user_id}")
+# Update user information
+@app.put("/user_data/{user_id}")
 async def update_user_info(user_id: str, body: UserUpdate):
     # Filter out None values to only update provided fields
-    update_data = {k: v for k, v in body.dict().items() if v is not None}
+    body_dict = body.model_dump()
+    update_data = {k: v for k, v in body_dict.items() if v is not None}
     
     if not update_data:
         raise HTTPException(status_code=400, detail="No data provided for update")

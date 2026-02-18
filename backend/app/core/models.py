@@ -9,10 +9,21 @@ class ExpenseRecord(BaseModel):
     item: str
     amount: float
     category: str
-    currency: str
+    currency: Optional[str] = ""
     date: str  # Format: YYYY-MM-DD
     note: Optional[str] = ""
 
     class Config:
         # Extra fields will be ignored to keep the database clean
         extra = "ignore"
+
+# User's information request model
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    categories: Optional[list[str]] = None
+    currency: Optional[str] = None
+
+# Parse expense request model
+class ParseRequestModel(BaseModel):
+    text: str
+    user_id: Optional[str] = "guest"
