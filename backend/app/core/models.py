@@ -26,4 +26,7 @@ class UserUpdate(BaseModel):
 # Parse expense request model
 class ParseRequestModel(BaseModel):
     text: str
-    user_id: Optional[str] = "guest"
+
+# GOOGLE_CLIENT_ID Token request model
+class TokenBody(BaseModel):
+    id_token: str

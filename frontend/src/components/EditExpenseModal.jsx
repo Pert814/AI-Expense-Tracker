@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { expenseService } from '../services/api';
 
-function EditExpenseModal({ expense, userId, onClose, onSave }) {
+function EditExpenseModal({ expense, onClose, onSave }) {
     const [formData, setFormData] = useState({
         item: expense.item || '',
         amount: expense.amount || '',
@@ -12,8 +12,6 @@ function EditExpenseModal({ expense, userId, onClose, onSave }) {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    const API_BASE_URL = import.meta.env.VITE_API_URL;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -26,7 +24,7 @@ function EditExpenseModal({ expense, userId, onClose, onSave }) {
         setError(null);
 
         try {
-            const response = await axios.put(`${API_BASE_URL}/user-data/${userId}/${expense.id}`, formData);
+            const response = await expenseService.update(expense.id, formData);
             if (response.data.status === 'success') {
                 onSave();
                 onClose();

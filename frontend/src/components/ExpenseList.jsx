@@ -1,41 +1,37 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { expenseService } from '../services/api';
+
 // ExpenseList component for displaying expense history
-function ExpenseList({ userId, refreshTrigger }) {
+function ExpenseList({ refreshTrigger }) {
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const API_BASE_URL = import.meta.env.VITE_API_URL;
-
     // method to fetch user data from backend endpoint
     const fetchExpenses = async () => {
-        if (!userId) {
-            alert("User ID is missing");
-            return;
-        }
-
-        alert(`Fetching expenses for userId: ${userId}, API URL: ${API_BASE_URL}`);
         setLoading(true);
+        setError(null);
         try {
-            const response = await axios.get(`${API_BASE_URL}/user-data/${userId}`);
+            const response = await expenseService.getAll();
             if (response.data.status === 'success') {
-                setExpenses(response.data.data);
+                // Handle different response structures if necessary
+                const data = response.data.data;
+                setExpenses(Array.isArray(data) ? data : []);
             }
         } catch (err) {
             console.error('Error fetching expenses:', err);
-            alert(`Failed to load expense history: ${err.message}`);
             setError('Failed to load expense history.');
         } finally {
             setLoading(false);
         }
     };
+
     // method to delete user record
     const handleDelete = async (recordId) => {
         if (!window.confirm('Are you sure you want to delete this record?')) return;
 
         try {
-            const response = await axios.delete(`${API_BASE_URL}/user-data/${userId}/${recordId}`);
+            const response = await expenseService.delete(recordId);
             if (response.data.status === 'success') {
                 // Refresh list after deletion
                 fetchExpenses();
@@ -46,10 +42,10 @@ function ExpenseList({ userId, refreshTrigger }) {
         }
     };
 
-    // Fetch data on component mount or when userId/refreshTrigger changes
+    // Fetch data on component mount or when refreshTrigger changes
     useEffect(() => {
         fetchExpenses();
-    }, [userId, refreshTrigger]);
+    }, [refreshTrigger]);
 
     if (loading && expenses.length === 0) return <p>Loading history...</p>;
     if (error) return <p style={{ color: 'red' }}>{error}</p>;

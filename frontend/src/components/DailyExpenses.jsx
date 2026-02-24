@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { expenseService } from '../services/api';
 import EditExpenseModal from './EditExpenseModal';
 
-function DailyExpenses({ userId }) {
+function DailyExpenses() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [viewDate, setViewDate] = useState(new Date());
     const [expenses, setExpenses] = useState([]);
@@ -11,17 +11,14 @@ function DailyExpenses({ userId }) {
     const [selectedExpense, setSelectedExpense] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
-    const API_BASE_URL = import.meta.env.VITE_API_URL;
-
     // Fetch all expenses initially to filter by date locally
-    // (Or fetch by date if the API supports it, but here we can reuse existing logic)
     const fetchExpenses = async () => {
-        if (!userId) return;
         setLoading(true);
         try {
-            const response = await axios.get(`${API_BASE_URL}/user-data/${userId}`);
+            const response = await expenseService.getAll();
             if (response.data.status === 'success') {
-                setExpenses(response.data.data);
+                const data = response.data.data;
+                setExpenses(Array.isArray(data) ? data : []);
             }
         } catch (err) {
             console.error('Error fetching expenses:', err);
@@ -32,7 +29,7 @@ function DailyExpenses({ userId }) {
 
     useEffect(() => {
         fetchExpenses();
-    }, [userId]);
+    }, []);
 
     useEffect(() => {
         const formattedSelected = selectedDate.toISOString().split('T')[0];

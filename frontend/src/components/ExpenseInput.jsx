@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { expenseService } from '../services/api';
+
 // ExpenseInput component for submitting expenses via AI parsing
-function ExpenseInput({ userId, onSuccess }) {
+function ExpenseInput({ onSuccess }) {
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
 
-    // Use environment variable for the API URL
-    const API_BASE_URL = import.meta.env.VITE_API_URL;
     // handle form submission after user click submit button
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,10 +18,7 @@ function ExpenseInput({ userId, onSuccess }) {
         setResult(null);
         // send user input to backend for AI parsing
         try {
-            const response = await axios.post(`${API_BASE_URL}/parse-expense`, {
-                text: text,
-                user_id: userId
-            });
+            const response = await expenseService.parse(text);
 
             if (response.data.status === 'success') {
                 setResult(response.data.data);
@@ -31,7 +27,6 @@ function ExpenseInput({ userId, onSuccess }) {
             }
         } catch (err) {
             console.error('Parsing error:', err);
-            alert(`Failed to parse text: ${err.message}`);
             setError('Failed to parse text. Please ensure the backend server is running.');
         } finally {
             setLoading(false);

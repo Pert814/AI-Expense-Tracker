@@ -73,12 +73,10 @@ function App() {
             <p>Your Email: {user.email}</p>
 
             <ExpenseInput
-              userId={user.sub}
               onSuccess={() => setRefreshTrigger(prev => prev + 1)}
             />
 
             <ExpenseList
-              userId={user.sub}
               refreshTrigger={refreshTrigger}
             />
           </>
@@ -87,14 +85,13 @@ function App() {
         {currentView === 'daily' && (
           <>
             <h1>Daily Expense History</h1>
-            <DailyExpenses userId={user.sub} />
+            <DailyExpenses />
           </>
         )}
 
         {currentView === 'settings' && (
           <>
             <UserSettings
-              userId={user.sub}
               onUpdateSuccess={handleUserUpdate}
             />
           </>

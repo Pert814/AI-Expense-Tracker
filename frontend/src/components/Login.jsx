@@ -1,27 +1,28 @@
 import { GoogleLogin } from '@react-oauth/google';
-import axios from 'axios';
+import { authService } from '../services/api';
 
 // Login component for Google OAuth
 function Login({ onLoginSuccess }) {
     const handleSuccess = async (response) => {
         console.log('Google Login Success:', response);
         const idToken = response.credential;
-        // temporary store user info in localStorage
+
         try {
-            const base64Url = idToken.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
+            // Call backend to verify token and initialize user
+            const backendResponse = await authService.login(idToken);
 
-            const user = JSON.parse(jsonPayload);
+            if (backendResponse.data.status === 'success') {
+                const userData = backendResponse.data.user;
 
-            localStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('token', idToken);
+                // Store token and user info
+                localStorage.setItem('user', JSON.stringify(userData));
+                localStorage.setItem('token', idToken);
 
-            onLoginSuccess(user);
+                onLoginSuccess(userData);
+            }
         } catch (error) {
             console.error('Error handling login:', error);
+            alert('Authentication with server failed. Please try again.');
         }
     };
 

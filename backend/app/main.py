@@ -1,12 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from pydantic import BaseModel
 from typing import Optional
 import os
 from app.core.parser import expense_parser
 from app.core.database import db_client
-from app.core.models import ExpenseRecord, UserUpdate, ParseRequestModel
+from app.core.models import ExpenseRecord, UserUpdate, ParseRequestModel, TokenBody
 from google.oauth2 import id_token
 from google.auth.transport import requests
+import firebase_admin
+from firebase_admin import auth, credentials
+from fastapi.middleware.cors import CORSMiddleware
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -16,8 +19,6 @@ app = FastAPI(
 )
 
 # Add CORS Middleware for Vite(different port) to connect to API
-from fastapi.middleware.cors import CORSMiddleware
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins for development; consider restricting in production
@@ -29,9 +30,22 @@ app.add_middleware(
 # read GOOGLE_CLIENT_ID from .env
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
-# GOOGLE_CLIENT_ID Token request model
-class TokenBody(BaseModel):
-    id_token: str
+# dependency to initialize Google Auth verification
+async def get_current_user_id(authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+    token = authorization.split("Bearer ")[1] # get token from header
+    try:
+        # Verify Google ID token
+        idinfo = id_token.verify_oauth2_token(
+            token,
+            requests.Request(),
+            GOOGLE_CLIENT_ID
+        )
+        return idinfo['sub']
+    except Exception as e:
+        print(f"❌ Token verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Invalid ID token")
 
 # Google auth endpoint
 @app.post("/auth/google")
@@ -60,11 +74,11 @@ async def google_auth(body: TokenBody):
 
 # parse expense from gemini AI
 @app.post("/parse_expense")
-async def parse_expense(request: ParseRequestModel):
+async def parse_expense(request: ParseRequestModel, user_id: str = Depends(get_current_user_id)):
     # get user settings from firestore
-    success, user_info = db_client.get_user_info(request.user_id)
+    success, user_info = db_client.get_user_info(user_id)
     if not success:
-        raise HTTPException(status_code=404, detail=f"User not found: {request.user_id}")
+        raise HTTPException(status_code=404, detail=f"User not found: {user_id}")
     user_categories = user_info.get("categories", [])
     user_currency = user_info.get("currency", "USD")
     
@@ -81,7 +95,7 @@ async def parse_expense(request: ParseRequestModel):
     }
 # Create expense in user's database record
 @app.post("/expense/create")
-async def create_expense_data(request: ExpenseRecord, user_id: str):
+async def create_expense_data(request: ExpenseRecord, user_id: str = Depends(get_current_user_id)):
     expense_data = request.model_dump()  # Convert Pydantic model to dict
     db_success, db_result = db_client.create_user_record(user_id, expense_data)
     
@@ -97,8 +111,8 @@ async def create_expense_data(request: ExpenseRecord, user_id: str):
     }
 
 # Read expense from user
-@app.get("/expense/{user_id}")
-async def read_expense_data(user_id: str):
+@app.get("/expense")
+async def read_expense_data(user_id: str = Depends(get_current_user_id)):
     print(f"[DEBUG] Received request for user_id: {user_id}")
     success, result = db_client.read_user_record(user_id)
     
@@ -112,8 +126,8 @@ async def read_expense_data(user_id: str):
         "data": result
     }
 # Update expense data from user 
-@app.put("/expense/{user_id}/{record_id}")
-async def update_expense_data(user_id: str, record_id: str, data: dict):
+@app.put("/expense/{record_id}")
+async def update_expense_data(record_id: str, data: dict, user_id: str = Depends(get_current_user_id)):
     success, result = db_client.update_user_record(user_id, record_id, data)
     
     if not success:
@@ -124,8 +138,8 @@ async def update_expense_data(user_id: str, record_id: str, data: dict):
         "message": "Record updated successfully"
     }
 # delete expense from user 
-@app.delete("/expense/{user_id}/{record_id}")
-async def delete_expense_data(user_id: str, record_id: str):
+@app.delete("/expense/{record_id}")
+async def delete_expense_data(record_id: str, user_id: str = Depends(get_current_user_id)):
     success, result = db_client.delete_user_record(user_id, record_id)
     
     if not success:
@@ -136,8 +150,8 @@ async def delete_expense_data(user_id: str, record_id: str):
     }
 
 # Get user information 
-@app.get("/user_data/{user_id}")
-async def get_user_info(user_id: str):
+@app.get("/user_data")
+async def get_user_info(user_id: str = Depends(get_current_user_id)):
     success, result = db_client.get_user_info(user_id)
     
     if not success:
@@ -150,8 +164,8 @@ async def get_user_info(user_id: str):
     }
 
 # Update user information
-@app.put("/user_data/{user_id}")
-async def update_user_info(user_id: str, body: UserUpdate):
+@app.put("/user_data")
+async def update_user_info(body: UserUpdate, user_id: str = Depends(get_current_user_id)):
     # Filter out None values to only update provided fields
     body_dict = body.model_dump()
     update_data = {k: v for k, v in body_dict.items() if v is not None}

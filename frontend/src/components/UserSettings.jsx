@@ -1,22 +1,20 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { userService } from '../services/api';
 
-function UserSettings({ userId, onUpdateSuccess }) {
+function UserSettings({ onUpdateSuccess }) {
     const [userInfo, setUserInfo] = useState({ name: '', categories: [], currency: 'TWD' });
     const [newCategory, setNewCategory] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
-    const API_BASE_URL = import.meta.env.VITE_API_URL;
-
     useEffect(() => {
         fetchUserInfo();
-    }, [userId]);
+    }, []);
 
     const fetchUserInfo = async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/user/${userId}`);
+            const response = await userService.getInfo();
             if (response.data.status === 'success') {
                 setUserInfo(response.data.data);
             }
@@ -34,7 +32,7 @@ function UserSettings({ userId, onUpdateSuccess }) {
         setMessage({ type: '', text: '' });
 
         try {
-            const response = await axios.put(`${API_BASE_URL}/user/${userId}`, {
+            const response = await userService.update({
                 name: userInfo.name,
                 categories: userInfo.categories,
                 currency: userInfo.currency

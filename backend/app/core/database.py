@@ -8,7 +8,7 @@ from app.core.models import ExpenseRecord
 load_dotenv()
 
 class Database:
-    # 初始化 Firebase database連接
+    # Initialize connection to Firebase database
     def __init__(self):
         if not firebase_admin._apps:
             config_str = os.getenv('FIREBASE_CONFIG')
