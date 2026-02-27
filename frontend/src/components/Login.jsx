@@ -1,28 +1,20 @@
 import { GoogleLogin } from '@react-oauth/google';
 import { authService } from '../services/api';
 
-// Login component for Google OAuth
 function Login({ onLoginSuccess }) {
     const handleSuccess = async (response) => {
-        console.log('Google Login Success:', response);
         const idToken = response.credential;
-
         try {
-            // Call backend to verify token and initialize user
             const backendResponse = await authService.login(idToken);
-
             if (backendResponse.data.status === 'success') {
                 const userData = backendResponse.data.user;
-
-                // Store token and user info
                 localStorage.setItem('user', JSON.stringify(userData));
                 localStorage.setItem('token', idToken);
-
                 onLoginSuccess(userData);
             }
         } catch (error) {
             console.error('Error handling login:', error);
-            alert('Authentication with server failed. Please try again.');
+            alert('SYSTEM ERROR: UNABLE TO CONNECT TO VAULT.');
         }
     };
 
@@ -37,18 +29,36 @@ function Login({ onLoginSuccess }) {
             alignItems: 'center',
             justifyContent: 'center',
             height: '100vh',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white'
+            background: '#1a1a1a',
+            color: 'white',
+            padding: '2rem'
         }}>
-            <h1>AI Expense Tracker</h1>
-            <p>Please log in to start managing your expenses</p>
-            <div style={{ marginTop: '20px' }}>
-                <GoogleLogin
-                    clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
-                    onSuccess={handleSuccess}
-                    onError={handleError}
-                    useOneTap
-                />
+            <div className="pixel-border" style={{
+                background: 'white',
+                color: '#212529',
+                textAlign: 'center',
+                padding: '4rem 2rem',
+                maxWidth: '500px'
+            }}>
+                <h1 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--pixel-primary)' }}>AI-XPNS TRACKER</h1>
+                <div style={{ height: '4px', background: 'var(--pixel-dark)', margin: '0 0 2rem 0' }}></div>
+
+                <p style={{ fontSize: '0.6rem', marginBottom: '3rem', lineHeight: '2' }}>
+                    INSERT TOKEN TO START <br />
+                    MANAGING YOUR PERSONAL COINS
+                </p>
+
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                    <GoogleLogin
+                        onSuccess={handleSuccess}
+                        onError={handleError}
+                        useOneTap
+                    />
+                </div>
+
+                <p style={{ fontSize: '0.4rem', color: 'var(--pixel-gray)', marginTop: '2rem' }}>
+                    READY PLAYER ONE
+                </p>
             </div>
         </div>
     );

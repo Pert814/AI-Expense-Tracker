@@ -70,18 +70,18 @@ function DailyExpenses() {
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     return (
-        <div style={{ maxWidth: '800px', margin: '20px auto', padding: '20px', borderRadius: '12px', background: 'white', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+        <div className="pixel-border" style={{ maxWidth: '800px', margin: '20px auto' }}>
             {/* Calendar Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <button onClick={handlePrevMonth} style={{ padding: '8px 15px', borderRadius: '8px', border: '1px solid #ddd', background: 'white', cursor: 'pointer' }}>&lt;</button>
-                <h2 style={{ margin: 0 }}>{monthNames[currentMonth]} {currentYear}</h2>
-                <button onClick={handleNextMonth} style={{ padding: '8px 15px', borderRadius: '8px', border: '1px solid #ddd', background: 'white', cursor: 'pointer' }}>&gt;</button>
+                <button className="pixel-button" onClick={handlePrevMonth}>&lt;</button>
+                <h2 style={{ margin: 0, fontSize: '1rem' }}>{monthNames[currentMonth]} {currentYear}</h2>
+                <button className="pixel-button" onClick={handleNextMonth}>&gt;</button>
             </div>
 
             {/* Calendar Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '5px', marginBottom: '30px' }}>
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} style={{ textAlign: 'center', fontWeight: 'bold', padding: '10px', color: '#666' }}>{day}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '30px' }}>
+                {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
+                    <div key={day} style={{ textAlign: 'center', fontWeight: 'bold', padding: '10px', fontSize: '0.6rem', color: 'var(--pixel-gray)' }}>{day}</div>
                 ))}
 
                 {Array.from({ length: startOffset }).map((_, i) => (
@@ -90,23 +90,22 @@ function DailyExpenses() {
 
                 {Array.from({ length: daysCount }).map((_, i) => {
                     const day = i + 1;
+                    const selected = isSelected(day);
+                    const today = isToday(day);
                     return (
                         <div
                             key={day}
                             onClick={() => handleDateClick(day)}
+                            className="pixel-button"
                             style={{
-                                padding: '10px',
+                                padding: '10px 0',
                                 textAlign: 'center',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                background: isSelected(day) ? '#4a90e2' : isToday(day) ? '#e1f5fe' : 'transparent',
-                                color: isSelected(day) ? 'white' : 'inherit',
-                                border: isToday(day) ? '1px solid #4a90e2' : '1px solid transparent',
-                                fontWeight: isToday(day) || isSelected(day) ? 'bold' : 'normal'
+                                background: selected ? 'var(--pixel-primary)' : today ? 'var(--pixel-warning)' : 'white',
+                                color: selected ? 'white' : 'black',
+                                fontSize: '0.7rem',
+                                margin: 0,
+                                boxSizing: 'border-box'
                             }}
-                            onMouseEnter={(e) => { if (!isSelected(day)) e.target.style.background = '#f5f5f5' }}
-                            onMouseLeave={(e) => { if (!isSelected(day)) e.target.style.background = isToday(day) ? '#e1f5fe' : 'transparent' }}
                         >
                             {day}
                         </div>
@@ -115,19 +114,19 @@ function DailyExpenses() {
             </div>
 
             {/* Daily Expense List */}
-            <div style={{ borderTop: '2px solid #eee', paddingTop: '20px' }}>
-                <h3>{selectedDate.toLocaleDateString()}</h3>
+            <div style={{ borderTop: '4px solid #212529', paddingTop: '20px' }}>
+                <h3 style={{ fontSize: '0.8rem' }}>{selectedDate.toDateString()}</h3>
                 {loading ? (
-                    <p>Loading...</p>
+                    <p style={{ fontSize: '0.7rem' }}>LOADING...</p>
                 ) : dailyExpenses.length === 0 ? (
-                    <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>No expenses recorded for this day.</p>
+                    <p style={{ color: 'var(--pixel-gray)', textAlign: 'center', padding: '20px', fontSize: '0.7rem' }}>NO RECORDS ON THIS DAY.</p>
                 ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table className="pixel-table">
                         <thead>
-                            <tr style={{ borderBottom: '1px solid #eee', textAlign: 'left' }}>
-                                <th style={{ padding: '10px' }}>Item</th>
-                                <th style={{ padding: '10px' }}>Category</th>
-                                <th style={{ padding: '10px', textAlign: 'right' }}>Amount</th>
+                            <tr>
+                                <th>ITEM</th>
+                                <th>TYPE</th>
+                                <th style={{ textAlign: 'right' }}>CASH</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -138,30 +137,24 @@ function DailyExpenses() {
                                         setSelectedExpense(exp);
                                         setShowEditModal(true);
                                     }}
-                                    style={{
-                                        borderBottom: '1px solid #f9f9f9',
-                                        cursor: 'pointer',
-                                        transition: 'background 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    style={{ cursor: 'pointer' }}
                                 >
-                                    <td style={{ padding: '10px' }}>{exp.item}</td>
-                                    <td style={{ padding: '10px' }}>
-                                        <span style={{ padding: '2px 8px', borderRadius: '12px', background: '#e3f2fd', color: '#1976d2', fontSize: '12px' }}>
+                                    <td>{exp.item}</td>
+                                    <td>
+                                        <span style={{ color: 'var(--pixel-primary)' }}>
                                             {exp.category}
                                         </span>
                                     </td>
-                                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: 'bold' }}>
-                                        {exp.amount} {exp.currency}
+                                    <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                                        {exp.amount}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                         <tfoot>
                             <tr style={{ fontWeight: 'bold' }}>
-                                <td colSpan="2" style={{ padding: '10px', textAlign: 'right' }}>Total:</td>
-                                <td style={{ padding: '10px', textAlign: 'right' }}>
+                                <td colSpan="2" style={{ textAlign: 'right' }}>TOTAL:</td>
+                                <td style={{ textAlign: 'right' }}>
                                     {dailyExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0).toFixed(2)}
                                 </td>
                             </tr>
@@ -173,7 +166,6 @@ function DailyExpenses() {
             {showEditModal && selectedExpense && (
                 <EditExpenseModal
                     expense={selectedExpense}
-                    userId={userId}
                     onClose={() => {
                         setShowEditModal(false);
                         setSelectedExpense(null);

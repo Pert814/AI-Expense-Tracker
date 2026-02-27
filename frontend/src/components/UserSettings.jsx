@@ -67,19 +67,19 @@ function UserSettings({ onUpdateSuccess }) {
         });
     };
 
-    if (loading) return <div>Loading settings...</div>;
+    if (loading) return <div style={{ fontSize: '0.7rem' }}>LOADING...</div>;
 
     return (
-        <div style={{ maxWidth: '600px', margin: '20px auto', padding: '30px', borderRadius: '12px', background: '#fff', boxShadow: '0 8px 16px rgba(0,0,0,0.1)', textAlign: 'left' }}>
-            <h2 style={{ marginBottom: '20px', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>User Settings</h2>
+        <div className="pixel-border" style={{ maxWidth: '600px', margin: '20px auto', textAlign: 'left' }}>
+            <h2 style={{ marginBottom: '20px', fontSize: '1rem' }}>USER PROFILE</h2>
 
             {message.text && (
-                <div style={{
+                <div className="pixel-border" style={{
                     padding: '10px',
                     marginBottom: '20px',
-                    borderRadius: '4px',
-                    background: message.type === 'success' ? '#d4edda' : '#f8d7da',
-                    color: message.type === 'success' ? '#155724' : '#721c24'
+                    background: message.type === 'success' ? 'var(--pixel-success)' : 'var(--pixel-danger)',
+                    color: 'white',
+                    fontSize: '0.6rem'
                 }}>
                     {message.text}
                 </div>
@@ -87,63 +87,64 @@ function UserSettings({ onUpdateSuccess }) {
 
             <form onSubmit={handleUpdateInfo}>
                 <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Display Name</label>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.7rem' }}>NICKNAME</label>
                     <input
+                        className="pixel-input"
                         type="text"
                         value={userInfo.name}
                         onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
-                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
                     />
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Default Currency</label>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.7rem' }}>CURRENCY</label>
                     <input
+                        className="pixel-input"
                         type="text"
                         value={userInfo.currency || ''}
                         onChange={(e) => setUserInfo({ ...userInfo, currency: e.target.value })}
-                        placeholder="e.g., TWD, USD"
-                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
+                        placeholder="E.G. TWD"
                     />
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Categories</label>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.7rem' }}>CATEGORIES</label>
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                         <input
+                            className="pixel-input"
                             type="text"
                             value={newCategory}
                             onChange={(e) => setNewCategory(e.target.value)}
-                            placeholder="Add new category"
-                            style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
+                            placeholder="NEW TAG"
+                            style={{ flex: 1, marginBottom: 0 }}
                         />
                         <button
+                            className="pixel-button success"
                             type="button"
                             onClick={addCategory}
-                            style={{ padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                            style={{ margin: 0 }}
                         >
-                            Add
+                            ADD
                         </button>
                     </div>
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         {userInfo.categories.map(cat => (
-                            <span key={cat} style={{
-                                background: '#e9ecef',
-                                padding: '5px 12px',
-                                borderRadius: '20px',
+                            <span key={cat} className="pixel-border" style={{
+                                padding: '4px 8px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px',
-                                fontSize: '14px'
+                                fontSize: '0.6rem',
+                                background: '#eee'
                             }}>
                                 {cat}
                                 <button
                                     type="button"
                                     onClick={() => removeCategory(cat)}
-                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#dc3545', fontWeight: 'bold', fontSize: '16px', padding: 0 }}
+                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--pixel-danger)', fontWeight: 'bold' }}
                                 >
-                                    ×
+                                    X
                                 </button>
                             </span>
                         ))}
@@ -151,22 +152,12 @@ function UserSettings({ onUpdateSuccess }) {
                 </div>
 
                 <button
+                    className="pixel-button primary"
                     type="submit"
                     disabled={saving}
-                    style={{
-                        width: '100%',
-                        padding: '12px',
-                        background: '#4a90e2',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        cursor: saving ? 'not-allowed' : 'pointer',
-                        opacity: saving ? 0.7 : 1
-                    }}
+                    style={{ width: '100%', marginTop: '1rem' }}
                 >
-                    {saving ? 'Saving...' : 'Save Settings'}
+                    {saving ? 'SAVING...' : 'SAVE CONFIG'}
                 </button>
             </form>
         </div>

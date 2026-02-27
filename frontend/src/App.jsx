@@ -5,11 +5,15 @@ import ExpenseInput from './components/ExpenseInput'
 import ExpenseList from './components/ExpenseList'
 import DailyExpenses from './components/DailyExpenses'
 import UserSettings from './components/UserSettings'
+import ExpenseAnalysis from './components/ExpenseAnalysis'
+import { userService, expenseService } from './services/api'
 
 function App() {
   const [user, setUser] = useState(null)
+  const [userInfo, setUserInfo] = useState(null)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
-  const [currentView, setCurrentView] = useState('home') // 'home', 'daily', or 'settings'
+  const [currentView, setCurrentView] = useState('home') // 'home', 'stats', 'daily', or 'settings'
+  const [summary, setSummary] = useState({ total: 0, count: 0 })
 
   // check localStorage for user info
   useEffect(() => {
@@ -18,85 +22,159 @@ function App() {
       setUser(JSON.parse(savedUser))
     }
   }, [])
+
+  // Fetch detailed user info (categories, currency)
+  useEffect(() => {
+    if (user) {
+      fetchUserInfo()
+      fetchSummary()
+    }
+  }, [user, refreshTrigger])
+
+  const fetchUserInfo = async () => {
+    try {
+      const response = await userService.getInfo()
+      if (response.data.status === 'success') {
+        setUserInfo(response.data.data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch user info:', err)
+    }
+  }
+
+  const fetchSummary = async () => {
+    try {
+      const response = await expenseService.getAll()
+      if (response.data.status === 'success') {
+        const data = response.data.data
+        const total = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+
+        // Calculate category distribution
+        const cats = {}
+        data.forEach(item => {
+          cats[item.category] = (cats[item.category] || 0) + (parseFloat(item.amount) || 0)
+        })
+
+        setSummary({
+          total: total.toFixed(2),
+          count: data.length,
+          categories: Object.entries(cats).sort((a, b) => b[1] - a[1])
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch summary:', err)
+    }
+  }
+
   // logout function 
   const handleLogout = () => {
     localStorage.removeItem('user')
     localStorage.removeItem('token')
     setUser(null)
+    setUserInfo(null)
   }
 
-  // update user name in state and localStorage
+  // update user info in state
   const handleUserUpdate = (updatedInfo) => {
-    const newUser = { ...user, name: updatedInfo.name }
-    setUser(newUser)
-    localStorage.setItem('user', JSON.stringify(newUser))
+    setUserInfo(updatedInfo)
   }
 
   if (!user) {
     return <Login onLoginSuccess={(userData) => setUser(userData)} />
   }
-  // after login, show app main page
+
   return (
-    <div className="app-container">
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#333', color: 'white' }}>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <span style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>AI Tracker</span>
+    <div className="app-wrapper">
+      <header className="app-header">
+        <div className="logo">
+          <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>AI-BANK</span>
+        </div>
+        <nav className="nav-links">
           <button
+            className={`pixel-button ${currentView === 'home' ? 'primary' : ''}`}
             onClick={() => setCurrentView('home')}
-            style={{ background: currentView === 'home' ? '#4a90e2' : 'transparent', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer' }}
+            style={{ fontSize: '0.6rem' }}
           >
-            Home
+            ENTRY
           </button>
           <button
+            className={`pixel-button ${currentView === 'stats' ? 'primary' : ''}`}
+            onClick={() => setCurrentView('stats')}
+            style={{ fontSize: '0.6rem' }}
+          >
+            STATS
+          </button>
+          <button
+            className={`pixel-button ${currentView === 'daily' ? 'primary' : ''}`}
             onClick={() => setCurrentView('daily')}
-            style={{ background: currentView === 'daily' ? '#4a90e2' : 'transparent', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer' }}
+            style={{ fontSize: '0.6rem' }}
           >
-            Daily View
+            LOGS
           </button>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <span>Hello, {user.name}</span>
           <button
+            className={`pixel-button ${currentView === 'settings' ? 'primary' : ''}`}
             onClick={() => setCurrentView('settings')}
-            style={{ background: currentView === 'settings' ? '#4a90e2' : '#555', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}
+            style={{ fontSize: '0.6rem' }}
           >
-            Settings
+            CONFIG
           </button>
-          <button onClick={handleLogout} style={{ background: '#ff4d4f', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Logout</button>
-        </div>
-      </nav>
+          <button className="pixel-button danger" onClick={handleLogout} style={{ fontSize: '0.6rem' }}>
+            EXIT
+          </button>
+        </nav>
+      </header>
 
-      <main style={{ padding: '2rem', textAlign: 'center' }}>
+      {/* User Status Bar */}
+      <div style={{ background: '#eee', padding: '5px 20px', display: 'flex', justifyContent: 'space-between', fontSize: '0.5rem', borderBottom: '2px solid #ccc' }}>
+        <span>PLAYER: {userInfo?.name || user.name}</span>
+        <span>VAULT: {summary.total} {userInfo?.currency || 'TWD'}</span>
+      </div>
+
+      <main className="pixel-container">
         {currentView === 'home' && (
-          <>
-            <h1>Welcome to AI Expense Tracker</h1>
-            <p>Your Email: {user.email}</p>
+          <div className="view-home">
+            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+              <h1 style={{ fontSize: '1.2rem', color: 'var(--pixel-dark)' }}>READY FOR ENTRY?</h1>
+              <p style={{ fontSize: '0.6rem', color: 'var(--pixel-gray)' }}>DESCRIBE YOUR SPENDING TO THE AI</p>
+            </div>
 
-            <ExpenseInput
-              onSuccess={() => setRefreshTrigger(prev => prev + 1)}
-            />
+            <section style={{ marginBottom: '3rem' }}>
+              <ExpenseInput onSuccess={() => setRefreshTrigger(prev => prev + 1)} />
+            </section>
 
-            <ExpenseList
-              refreshTrigger={refreshTrigger}
-            />
-          </>
+            <section>
+              <h2 style={{ fontSize: '0.8rem', textAlign: 'center', color: 'var(--pixel-gray)', marginBottom: '1.5rem' }}>RECENT ACTIVITY</h2>
+              <ExpenseList refreshTrigger={refreshTrigger} />
+            </section>
+          </div>
+        )}
+
+        {currentView === 'stats' && (
+          <ExpenseAnalysis summary={summary} userInfo={userInfo} />
         )}
 
         {currentView === 'daily' && (
-          <>
-            <h1>Daily Expense History</h1>
+          <div className="view-daily">
+            <h1 className="pixel-border" style={{ textAlign: 'center', background: 'var(--pixel-success)', color: 'white', fontSize: '1rem' }}>
+              HISTORY LOG
+            </h1>
             <DailyExpenses />
-          </>
+          </div>
         )}
 
         {currentView === 'settings' && (
-          <>
-            <UserSettings
-              onUpdateSuccess={handleUserUpdate}
-            />
-          </>
+          <div className="view-settings">
+            <h1 className="pixel-border" style={{ textAlign: 'center', background: 'var(--pixel-primary)', color: 'white', fontSize: '1rem' }}>
+              SYSTEM CONFIG
+            </h1>
+            <UserSettings onUpdateSuccess={handleUserUpdate} />
+          </div>
         )}
       </main>
+
+      <footer style={{ textAlign: 'center', padding: '2rem', fontSize: '0.5rem', color: 'var(--pixel-gray)' }}>
+        AI-XPNS TRACKER v1.0 // NOSTALGIC EDITION
+      </footer>
     </div>
   )
 }

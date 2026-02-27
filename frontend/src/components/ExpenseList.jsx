@@ -47,61 +47,56 @@ function ExpenseList({ refreshTrigger }) {
         fetchExpenses();
     }, [refreshTrigger]);
 
-    if (loading && expenses.length === 0) return <p>Loading history...</p>;
-    if (error) return <p style={{ color: 'red' }}>{error}</p>;
+    if (loading && expenses.length === 0) return <p style={{ fontSize: '0.7rem' }}>LOADING DATA...</p>;
+    if (error) return <p style={{ color: 'var(--pixel-danger)', fontSize: '0.7rem' }}>{error}</p>;
 
     return (
-        <div style={{ maxWidth: '800px', margin: '30px auto', padding: '20px', borderRadius: '12px', background: 'white', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+        <div className="pixel-border" style={{ maxWidth: '800px', margin: '30px auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <h3 style={{ margin: 0 }}>Recent Added Expenses</h3>
+                <h3 style={{ margin: 0, fontSize: '0.8rem' }}>RECENT RECORDS</h3>
                 <button
+                    className="pixel-button"
                     onClick={fetchExpenses}
-                    style={{ background: 'none', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', padding: '5px 10px' }}
+                    style={{ fontSize: '0.6rem' }}
                 >
-                    Refresh
+                    REFRESH
                 </button>
             </div>
 
             {expenses.length === 0 ? (
-                <p style={{ textAlign: 'center', color: '#888', padding: '20px' }}>No records found. Try adding one!</p>
+                <p style={{ textAlign: 'center', color: 'var(--pixel-gray)', padding: '20px', fontSize: '0.7rem' }}>NO COINS SPENT YET.</p>
             ) : (
                 <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <table className="pixel-table">
                         <thead>
-                            <tr style={{ borderBottom: '2px solid #eee' }}>
-                                <th style={{ padding: '12px 10px' }}>Date</th>
-                                <th style={{ padding: '12px 10px' }}>Category</th>
-                                <th style={{ padding: '12px 10px' }}>Item</th>
-                                <th style={{ padding: '12px 10px' }}>Note</th>
-                                <th style={{ padding: '12px 10px', textAlign: 'right' }}>Amount</th>
-                                <th style={{ padding: '12px 10px', textAlign: 'center' }}></th>
+                            <tr>
+                                <th>DATE</th>
+                                <th>TYPE</th>
+                                <th>ITEM</th>
+                                <th style={{ textAlign: 'right' }}>CASH</th>
+                                <th style={{ textAlign: 'center' }}>ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
                             {expenses.slice(0, 5).map((expense, index) => (
-                                <tr
-                                    key={expense.id || index}
-                                    style={{
-                                        borderBottom: '1px solid #f5f5f5',
-                                    }}
-                                >
-                                    <td style={{ padding: '12px 10px' }}>{expense.date}</td>
-                                    <td style={{ padding: '12px 10px' }}>
-                                        <span style={{ padding: '2px 8px', borderRadius: '12px', background: '#e3f2fd', color: '#1976d2', fontSize: '13px' }}>
+                                <tr key={expense.id || index}>
+                                    <td>{expense.date}</td>
+                                    <td>
+                                        <span style={{ color: 'var(--pixel-primary)' }}>
                                             {expense.category}
                                         </span>
                                     </td>
-                                    <td style={{ padding: '12px 10px' }}>{expense.item}</td>
-                                    <td style={{ padding: '12px 10px' }}>{expense.note}</td>
-                                    <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 'bold' }}>
-                                        {expense.amount} {expense.currency}
+                                    <td>{expense.item}</td>
+                                    <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                                        {expense.amount}
                                     </td>
-                                    <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                                    <td style={{ textAlign: 'center' }}>
                                         <button
+                                            className="pixel-button danger"
                                             onClick={() => handleDelete(expense.id || index)}
-                                            style={{ color: '#ff4d4f', border: 'none', background: 'none', cursor: 'pointer', fontSize: '14px' }}
+                                            style={{ fontSize: '0.5rem', padding: '4px 8px' }}
                                         >
-                                            Delete
+                                            DEL
                                         </button>
                                     </td>
                                 </tr>

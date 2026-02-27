@@ -62,9 +62,13 @@ class Database:
     # method to create user record
     def create_user_record(self, user_id, data):
         try:
-            data['created_at'] = firestore.SERVER_TIMESTAMP
+            # Create a copy to avoid modifying the original dict in-place
+            # which might be returned as JSON later (Sentinel object error)
+            record_to_save = data.copy()
+            record_to_save['created_at'] = firestore.SERVER_TIMESTAMP
+            
             collection_path = f"users/{user_id}/expenses" 
-            _, doc_ref = self.db.collection(collection_path).add(data)
+            _, doc_ref = self.db.collection(collection_path).add(record_to_save)
             return True, doc_ref.id
         except Exception as e:
             return False, str(e)

@@ -44,101 +44,93 @@ function EditExpenseModal({ expense, onClose, onSave }) {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: 'rgba(0,0,0,0.8)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 1000
         }}>
-            <div style={{
+            <div className="pixel-border" style={{
                 background: 'white',
-                padding: '30px',
-                borderRadius: '12px',
                 width: '90%',
                 maxWidth: '500px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
             }}>
-                <h3 style={{ marginTop: 0, marginBottom: '20px' }}>Edit Expense</h3>
-                {error && <p style={{ color: 'red' }}>{error}</p>}
+                <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '1rem' }}>EDIT ITEM</h3>
+                {error && <p style={{ color: 'var(--pixel-danger)', fontSize: '0.6rem' }}>{error}</p>}
 
                 <form onSubmit={handleSubmit}>
                     <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Item</label>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.7rem' }}>ITEM</label>
                         <input
+                            className="pixel-input"
                             type="text"
                             name="item"
                             value={formData.item}
                             onChange={handleChange}
                             required
-                            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
                         />
                     </div>
                     <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
                         <div style={{ flex: 1 }}>
-                            <label style={{ display: 'block', marginBottom: '5px' }}>Amount</label>
+                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.7rem' }}>CASH</label>
                             <input
+                                className="pixel-input"
                                 type="number"
                                 name="amount"
                                 value={formData.amount}
                                 onChange={handleChange}
                                 required
-                                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
                             />
                         </div>
                         <div style={{ flex: 1 }}>
-                            <label style={{ display: 'block', marginBottom: '5px' }}>Category</label>
+                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.7rem' }}>TYPE</label>
                             <input
+                                className="pixel-input"
                                 type="text"
                                 name="category"
                                 value={formData.category}
                                 onChange={handleChange}
                                 required
-                                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
                             />
                         </div>
                     </div>
                     <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Date</label>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.7rem' }}>TIME</label>
                         <input
+                            className="pixel-input"
                             type="date"
                             name="date"
                             value={formData.date}
                             onChange={handleChange}
                             required
-                            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Note</label>
-                        <textarea
-                            name="note"
-                            value={formData.note}
-                            onChange={handleChange}
-                            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd', minHeight: '80px' }}
                         />
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.7rem' }}>NOTE</label>
+                        <textarea
+                            className="pixel-input"
+                            name="note"
+                            value={formData.note}
+                            onChange={handleChange}
+                            style={{ minHeight: '60px', resize: 'none' }}
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                         <button
                             type="button"
+                            className="pixel-button"
                             onClick={onClose}
-                            style={{ padding: '8px 20px', borderRadius: '4px', border: '1px solid #ddd', background: 'white', cursor: 'pointer' }}
                         >
-                            Cancel
+                            CLOSE
                         </button>
                         <button
                             type="submit"
+                            className="pixel-button primary"
                             disabled={loading}
-                            style={{
-                                padding: '8px 20px',
-                                borderRadius: '4px',
-                                border: 'none',
-                                background: '#4a90e2',
-                                color: 'white',
-                                cursor: loading ? 'not-allowed' : 'pointer'
-                            }}
                         >
-                            {loading ? 'Saving...' : 'Save Changes'}
+                            {loading ? 'WAIT...' : 'SAVE'}
                         </button>
                     </div>
                 </form>
