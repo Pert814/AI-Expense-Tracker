@@ -31,8 +31,16 @@ function DailyExpenses() {
         fetchExpenses();
     }, []);
 
+    // Helper to format date to YYYY-MM-DD local string
+    const formatLocalDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     useEffect(() => {
-        const formattedSelected = selectedDate.toISOString().split('T')[0];
+        const formattedSelected = formatLocalDate(selectedDate);
         const filtered = expenses.filter(exp => exp.date === formattedSelected);
         setDailyExpenses(filtered);
     }, [selectedDate, expenses]);
@@ -90,8 +98,20 @@ function DailyExpenses() {
 
                 {Array.from({ length: daysCount }).map((_, i) => {
                     const day = i + 1;
+                    const dateObj = new Date(currentYear, currentMonth, day);
+                    const dateStr = formatLocalDate(dateObj);
+
+                    // Filter specifically for items with positive amount (actual cash spent)
+                    const hasConsumption = expenses.some(exp => exp.date === dateStr && parseFloat(exp.amount) > 0);
+
                     const selected = isSelected(day);
                     const today = isToday(day);
+
+                    let bgColor = 'white';
+                    if (selected) bgColor = 'var(--pixel-primary)';
+                    else if (today) bgColor = 'var(--pixel-warning)';
+                    else if (hasConsumption) bgColor = '#d3d3d3'; // Gray for actual spending days
+
                     return (
                         <div
                             key={day}
@@ -100,11 +120,12 @@ function DailyExpenses() {
                             style={{
                                 padding: '10px 0',
                                 textAlign: 'center',
-                                background: selected ? 'var(--pixel-primary)' : today ? 'var(--pixel-warning)' : 'white',
+                                background: bgColor,
                                 color: selected ? 'white' : 'black',
                                 fontSize: '0.7rem',
                                 margin: 0,
-                                boxSizing: 'border-box'
+                                boxSizing: 'border-box',
+                                border: hasConsumption && !selected && !today ? '4px solid #adafbc' : undefined
                             }}
                         >
                             {day}

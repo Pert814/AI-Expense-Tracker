@@ -14,9 +14,16 @@ function ExpenseList({ refreshTrigger }) {
         try {
             const response = await expenseService.getAll();
             if (response.data.status === 'success') {
-                // Handle different response structures if necessary
                 const data = response.data.data;
-                setExpenses(Array.isArray(data) ? data : []);
+                // Sort by date descending (latest first)
+                const sortedData = Array.isArray(data)
+                    ? data.sort((a, b) => {
+                        const dateDiff = new Date(b.date) - new Date(a.date);
+                        if (dateDiff !== 0) return dateDiff;
+                        return (b.id || '').localeCompare(a.id || '');
+                    })
+                    : [];
+                setExpenses(sortedData);
             }
         } catch (err) {
             console.error('Error fetching expenses:', err);

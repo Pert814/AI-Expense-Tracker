@@ -1,72 +1,101 @@
-# AI Expense Tracker
+# 👾 AI Expense Tracker
 
-An AI-powered expense management system featuring Google OAuth integration and intelligent financial analysis.
+[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB?logo=react)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Google Gemini](https://img.shields.io/badge/AI-Google%20Gemini-4285F4?logo=google-gemini)](https://ai.google.dev/)
+[![Firebase](https://img.shields.io/badge/Database-Firebase%20Firestore-FFCA28?logo=firebase)](https://firebase.google.com/)
+[![Cloud Run](https://img.shields.io/badge/Deployment-Google%20Cloud%20Run-4285F4?logo=google-cloud)](https://cloud.google.com/run)
 
-## 🚀 Quick Start Guide
+A sophisticated, AI-enhanced expense management system that leverages Natural Language Processing (NLP) to simplify financial tracking. Features a unique **Pixel Art (8-bit) aesthetic** for a nostalgic yet modern user experience.
 
-It is recommended to open two terminal windows to run the frontend and backend separately.
-
-### 1. Frontend
-**Stack**: Vite + React + @react-oauth/google
-
-```powershell
-cd frontend
-npm run dev
-```
-*   **URL**: [http://localhost:5173/](http://localhost:5173/)
-*   **Features**: Google login handling, expense dashboard, and UI components.
+🔗 **Live API Demo**: [https://ai-expense-tracker-651073678330.asia-northeast1.run.app/docs](https://ai-expense-tracker-651073678330.asia-northeast1.run.app/docs)
 
 ---
 
-### 2. Backend
-**Stack**: FastAPI + Uvicorn + Google GenAI
+## 🌟 Key Features
 
-**Command:**
-```powershell
-# Install dependencies first if needed:
-# pip install -r requirements.txt
+- **🤖 AI Natural Language Processing**: Just type "I spent 15 dollars on coffee this morning" and the Gemini-powered engine automatically extracts the amount, category, and date.
+- **🔐 Secure OAuth 2.0 Integration**: Enterprise-grade authentication using Google Identity Services for seamless and secure user login.
+- **📺 Retro Pixel Art UI**: A custom-designed "8-bit" interface built with CSS-in-JS and modern React components, providing a standout visual identity.
+- **📊 Personalized Analysis**: Intelligent categorization and expense breakdown based on user-defined labels and preferences.
+- **☁️ Cloud-Native Architecture**: Fully containerized backend optimized for Google Cloud Run's serverless infrastructure.
+
+---
+
+## 🛠️ Technical Stack
+
+### **Frontend**
+- **Library**: React 18 (Vite-powered for high-performance builds)
+- **State Management**: React Hooks & Context API
+- **Authentication**: `@react-oauth/google` (Google Identity Services)
+- **Styling**: Vanilla CSS with a Custom Pixel-Art Design System
+- **HTTP Client**: Axios with interceptors for JWT/Bearer token management
+
+### **Backend**
+- **Framework**: FastAPI (High-performance Python 3.10+ framework)
+- **AI Engine**: Google Generative AI (Gemini Pro) for NLP parsing
+- **Database**: Google Firebase Firestore (NoSQL for real-time data persistence)
+- **Security**: Google OAuth 2.0 Token Verification (ID Token validation)
+- **Deployment**: Dockerized & Hosted on **Google Cloud Run**
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph LR
+    User((User)) --> Frontend[React Frontend]
+    Frontend --> Auth[Google OAuth 2.0]
+    Frontend -- Bearer Token --> Backend[FastAPI Backend]
+    Backend -- Prompt --> Gemini[Google Gemini AI]
+    Backend -- CRUD --> Firestore[(Firebase Firestore)]
+    Backend -- Verify --> GoogleAuth[Google Token Verification]
+```
+
+---
+
+## 🚀 Local Development
+
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- Google Cloud Project (for Gemini & OAuth)
+- Firebase Project (for Firestore)
+
+### 1. Backend Setup
+```bash
 cd backend
+pip install -r requirements.txt
+# Create a .env file with your GEMINI_API_KEY, GOOGLE_CLIENT_ID, and FIREBASE_CONFIG
 python -m uvicorn app.main:app --reload
 ```
-*   **URL**: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-*   **Features**: Token verification, AI analysis logic, and API endpoints.
+
+### 2. Frontend Setup
+```bash
+cd frontend
+npm install
+# Create a .env file with VITE_API_URL and VITE_GOOGLE_CLIENT_ID
+npm run dev
+```
 
 ---
 
-## 🛠️ Development Notes
-*   **Google Login**: Both frontend and backend share the same `Client ID`.
-*   **Persistence**: User session is stored in `localStorage` to prevent frequent logins.
-*   **Environment**: Ensure `.env` is properly configured in the `backend` folder.
+## 📝 Environment Variables
 
-## 🔧 Environment Variables
+Required variables for full functionality:
 
-### Backend (.env in `/backend` folder)
-Create a `.env` file in the `backend` directory with the following variables:
+| Variable | Description |
+| :--- | :--- |
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 Client ID |
+| `FIREBASE_CONFIG` | Firestore service account configuration (JSON) |
+| `GEMINI_API_KEY` | Google AI Studio API Key |
+| `VITE_API_URL` | Backend API Endpoint URL |
 
-```env
-# Google OAuth Client ID (same as frontend)
-GOOGLE_CLIENT_ID=your_google_client_id_here
+---
 
-# Firebase Configuration (JSON string from Firebase Console)
-FIREBASE_CONFIG={"type":"service_account","project_id":"your_project_id",...}
+## 👨‍💻 Author
 
-# Google Gemini API Key for AI parsing
-GEMINI_API_KEY=your_gemini_api_key_here
-```
+Built with ❤️ by **CHIEN YU-HSUAN (カン　ユウケン)**
 
-### Frontend (.env in `/frontend` folder)
-Create a `.env` file in the `frontend` directory with the following variables:
+*This project was developed as a demonstration of integrating Generative AI into full-stack web applications with professional-grade cloud infrastructure.*
 
-```env
-# Backend API URL
-VITE_API_URL=http://127.0.0.1:8000
-
-# Google OAuth Client ID (same as backend)
-VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
-```
-
-### Setup Instructions
-1. **Google OAuth**: Create a project in [Google Cloud Console](https://console.cloud.google.com/), enable Google+ API, and create OAuth 2.0 credentials.
-2. **Firebase**: Set up a Firebase project, enable Firestore, and download the service account key (for `FIREBASE_CONFIG`).
-3. **Gemini API**: Get an API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-4. **Copy the Client ID** to both backend and frontend `.env` files.
