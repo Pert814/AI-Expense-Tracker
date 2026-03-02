@@ -14,7 +14,6 @@ function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [currentView, setCurrentView] = useState('home') // 'home', 'stats', 'daily', or 'settings'
   const [summary, setSummary] = useState({ total: 0, count: 0 })
-  const [expenses, setExpenses] = useState([])
 
   // Check localStorage for user info on startup
   useEffect(() => {
@@ -57,7 +56,6 @@ function App() {
       const response = await expenseService.getAll()
       if (response.data.status === 'success') {
         const data = response.data.data
-        setExpenses(data)
         const total = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
 
         // Calculate category distribution
@@ -161,7 +159,7 @@ function App() {
         )}
 
         {currentView === 'stats' && (
-          <ExpenseAnalysis expenses={expenses} userInfo={userInfo} />
+          <ExpenseAnalysis summary={summary} userInfo={userInfo} />
         )}
 
         {currentView === 'daily' && (
