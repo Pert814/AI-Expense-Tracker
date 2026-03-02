@@ -54,100 +54,42 @@ graph LR
 
 ---
 
-## 🌐 Deployment
-
-The application is fully deployed and accessible in a production-ready environment:
-
-- **Frontend**: [https://ai-expense-tracker-1a695.web.app/](https://ai-expense-tracker-1a695.web.app/) (Hosted on **Firebase Hosting**)
-- **Backend API**: [https://ai-expense-tracker-651073678330.asia-northeast1.run.app](https://ai-expense-tracker-651073678330.asia-northeast1.run.app) (Hosted on **Google Cloud Run**)
-- **API Documentation**: [/docs](https://ai-expense-tracker-651073678330.asia-northeast1.run.app/docs) (Swagger UI)
-
----
-
-## 🚀 Local Development & Testing
+## 🚀 Local Development
 
 ### Prerequisites
-- **Python 3.10+** & **Node.js 18+**
-- **Google Cloud Project**: Enabled Gemini API and OAuth 2.0.
-- **Firebase Project**: Firestore database initialized.
+- Python 3.10+
+- Node.js 18+
+- Google Cloud Project (for Gemini & OAuth)
+- Firebase Project (for Firestore)
 
-### 1. Backend Setup & Testing
+### 1. Backend Setup
 ```bash
-# Navigate to backend directory
 cd backend
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Environment Setup
-# Create a .env file based on .env.example
-# Ensure GOOGLE_CLIENT_ID, GEMINI_API_KEY, and FIREBASE credentials are set
-
-# Run the FastAPI server
-python -m uvicorn app.main:app --reload --port 8000
+# Create a .env file with your GEMINI_API_KEY, GOOGLE_CLIENT_ID, and FIREBASE_CONFIG
+python -m uvicorn app.main:app --reload
 ```
-**Testing the API**:
-- Open `http://localhost:8000/docs` to access the interactive Swagger documentation.
-- Use the `/auth/google` endpoint with a valid Google ID token to verify authentication.
-- Test the `/parse_expense` endpoint by providing natural language text.
 
-### 2. Frontend Setup & Testing
+### 2. Frontend Setup
 ```bash
-# Navigate to frontend directory
 cd frontend
-
-# Install dependencies
 npm install
-
-# Environment Setup
-# Create a .env file with VITE_API_URL=http://localhost:8000
-# and VITE_GOOGLE_CLIENT_ID
-
-# Run the development server
+# Create a .env file with VITE_API_URL and VITE_GOOGLE_CLIENT_ID
 npm run dev
 ```
-**Testing the Web App**:
-- Access `http://localhost:5173`.
-- **Login**: Use your Google account (ensure the authorized redirect URIs in Google Cloud Console include localhost).
-- **Expense Entry**: Try typing "Bought groceries for $50" in the entry box.
-- **Validation**: Verify that the AI correctly parses the amount and category, and that it persists to Firestore correctly.
 
 ---
 
 ## 📝 Environment Variables
 
-Highly sensitive keys must be configured in your environment or `.env` files:
+Required variables for full functionality:
 
-### Backend (`/backend/.env`)
 | Variable | Description |
 | :--- | :--- |
-| `GOOGLE_CLIENT_ID` | OAuth 2.0 Client ID for token verification |
-| `GEMINI_API_KEY` | API Key from Google AI Studio |
-| `TYPE`, `PROJECT_ID`, etc. | Firebase Admin SDK service account credentials |
-
-### Frontend (`/frontend/.env`)
-| Variable | Description |
-| :--- | :--- |
-| `VITE_API_URL` | Base URL of your backend (Local: `http://localhost:8000`) |
-| `VITE_GOOGLE_CLIENT_ID` | Must match the Backend's Client ID |
-
----
-
-## 📂 Project Structure
-```text
-.
-├── backend/            # FastAPI source code
-│   ├── app/            # Main application logic
-│   │   ├── core/       # AI parsing & Database logic
-│   │   └── main.py     # API entry point & routes
-│   └── Dockerfile      # Container configuration
-├── frontend/           # React + Vite source code
-│   ├── src/
-│   │   ├── components/ # Pixel Art UI components
-│   │   └── services/   # API & Auth services
-│   └── firebase.json   # Hosting configuration
-└── scripts/            # Utility scripts for data/deployment
-```
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 Client ID |
+| `FIREBASE_CONFIG` | Firestore service account configuration (JSON) |
+| `GEMINI_API_KEY` | Google AI Studio API Key |
+| `VITE_API_URL` | Backend API Endpoint URL |
 
 ---
 

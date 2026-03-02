@@ -15,20 +15,11 @@ function App() {
   const [currentView, setCurrentView] = useState('home') // 'home', 'stats', 'daily', or 'settings'
   const [summary, setSummary] = useState({ total: 0, count: 0 })
 
-  // Check localStorage for user info on startup
+  // check localStorage for user info
   useEffect(() => {
     const savedUser = localStorage.getItem('user')
-    const token = localStorage.getItem('token')
-    if (savedUser && token) {
-      try {
-        setUser(JSON.parse(savedUser))
-      } catch (e) {
-        console.error('Failed to parse saved user data:', e)
-        handleLogout()
-      }
-    } else if (savedUser || token) {
-      // Clean up inconsistent state
-      handleLogout()
+    if (savedUser) {
+      setUser(JSON.parse(savedUser))
     }
   }, [])
 
