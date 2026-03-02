@@ -53,10 +53,8 @@ function Login({ onLoginSuccess }) {
                         onSuccess={handleSuccess}
                         onError={handleError}
                         useOneTap
-                        uxMode="redirect"
                     />
                 </div>
-
 
                 <p style={{ fontSize: '0.4rem', color: 'var(--pixel-gray)', marginTop: '2rem' }}>
                     READY PLAYER ONE
