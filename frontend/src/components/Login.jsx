@@ -53,7 +53,6 @@ function Login({ onLoginSuccess }) {
                         onSuccess={handleSuccess}
                         onError={handleError}
                         useOneTap
-                        ux_mode="redirect"
                     />
                 </div>
 
