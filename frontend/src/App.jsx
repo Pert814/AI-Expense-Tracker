@@ -20,14 +20,15 @@ function App() {
   useEffect(() => {
     const savedUser = localStorage.getItem('user')
     const token = localStorage.getItem('token')
-
     if (savedUser && token) {
       try {
         setUser(JSON.parse(savedUser))
       } catch (e) {
+        console.error('Failed to parse saved user data:', e)
         handleLogout()
       }
     } else if (savedUser || token) {
+      // Clean up inconsistent state
       handleLogout()
     }
   }, [])
