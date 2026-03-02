@@ -21,6 +21,27 @@ api.interceptors.request.use(
     }
 );
 
+// Add a response interceptor to handle 401 errors globally
+api.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            // Check if this error happened during login to avoid infinite reload
+            const isLoginRequest = error.config && error.config.url && (error.config.url.includes('/auth/google'));
+
+            if (!isLoginRequest) {
+                console.warn('Unauthorized access detected or session expired, clearing session...');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.reload();
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 // API methods
 export const expenseService = {
     getAll: () => api.get('/expense'),
