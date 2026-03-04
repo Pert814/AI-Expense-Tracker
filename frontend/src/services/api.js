@@ -21,6 +21,21 @@ api.interceptors.request.use(
     }
 );
 
+// Add a response interceptor to handle authentication errors
+api.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        // If the error status is 401 (Unauthorized), the token might be expired or invalid
+        if (error.response && error.response.status === 401) {
+            // Dispatch a custom event to notify the App component
+            window.dispatchEvent(new CustomEvent('auth-error'));
+        }
+        return Promise.reject(error);
+    }
+);
+
 // API methods
 export const expenseService = {
     getAll: () => api.get('/expense'),
