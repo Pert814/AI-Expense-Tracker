@@ -7,6 +7,7 @@ import DailyExpenses from './components/DailyExpenses'
 import UserSettings from './components/UserSettings'
 import ExpenseAnalysis from './components/ExpenseAnalysis'
 import { userService, expenseService } from './services/api'
+import LoadingScreen from './components/LoadingScreen'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -14,6 +15,7 @@ function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [currentView, setCurrentView] = useState('home') // 'home', 'stats', 'daily', or 'settings'
   const [summary, setSummary] = useState({ total: 0, count: 0 })
+  const [isDataLoading, setIsDataLoading] = useState(false)
 
   // check localStorage for user info
   useEffect(() => {
@@ -26,8 +28,12 @@ function App() {
   // Fetch detailed user info (categories, currency)
   useEffect(() => {
     if (user) {
-      fetchUserInfo()
-      fetchSummary()
+      const initLoad = async () => {
+        setIsDataLoading(true);
+        await Promise.all([fetchUserInfo(), fetchSummary()]);
+        setIsDataLoading(false);
+      }
+      initLoad();
     }
   }, [user, refreshTrigger])
 
@@ -85,6 +91,7 @@ function App() {
 
   return (
     <div className="app-wrapper">
+      {isDataLoading && <LoadingScreen text="SYNCING DATA..." />}
       <header className="app-header">
         <div className="logo">
           <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>AI-BANK</span>

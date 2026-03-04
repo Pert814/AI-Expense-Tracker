@@ -72,9 +72,14 @@ function ExpenseInput({ onSuccess }) {
                         className="pixel-button primary"
                         type="submit"
                         disabled={loading || !text}
-                        style={{ width: '100%', margin: '0' }}
+                        style={{ width: '100%', margin: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
                     >
-                        {loading ? 'AI ANALYZING...' : 'SENT TO AI'}
+                        {loading ? (
+                            <>
+                                <div className="pixel-loader" style={{ width: '14px', height: '14px', border: '2px solid white' }}></div>
+                                AI ANALYZING...
+                            </>
+                        ) : 'SENT TO AI'}
                     </button>
                     <p style={{ fontSize: '0.5rem', marginTop: '10px', color: 'var(--pixel-gray)' }}>
                         USE NATURAL LANGUAGE. AI WILL EXTRACT DETAILS.

@@ -138,7 +138,10 @@ function DailyExpenses() {
             <div style={{ borderTop: '4px solid #212529', paddingTop: '20px' }}>
                 <h3 style={{ fontSize: '0.8rem' }}>{selectedDate.toDateString()}</h3>
                 {loading ? (
-                    <p style={{ fontSize: '0.7rem' }}>LOADING...</p>
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                        <div className="pixel-loader"></div>
+                        <p style={{ fontSize: '0.6rem', marginTop: '10px' }}>LOGGING INTO SYSTEM...</p>
+                    </div>
                 ) : dailyExpenses.length === 0 ? (
                     <p style={{ color: 'var(--pixel-gray)', textAlign: 'center', padding: '20px', fontSize: '0.7rem' }}>NO RECORDS ON THIS DAY.</p>
                 ) : (

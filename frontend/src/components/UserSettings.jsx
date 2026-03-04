@@ -67,7 +67,12 @@ function UserSettings({ onUpdateSuccess }) {
         });
     };
 
-    if (loading) return <div style={{ fontSize: '0.7rem' }}>LOADING...</div>;
+    if (loading) return (
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+            <div className="pixel-loader"></div>
+            <p style={{ fontSize: '0.6rem', marginTop: '10px' }}>LOADING CONFIG...</p>
+        </div>
+    );
 
     return (
         <div className="pixel-border" style={{ maxWidth: '600px', margin: '20px auto', textAlign: 'left' }}>
@@ -93,6 +98,7 @@ function UserSettings({ onUpdateSuccess }) {
                         type="text"
                         value={userInfo.name}
                         onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
+                        disabled={saving}
                     />
                 </div>
 
@@ -104,6 +110,7 @@ function UserSettings({ onUpdateSuccess }) {
                         value={userInfo.currency || ''}
                         onChange={(e) => setUserInfo({ ...userInfo, currency: e.target.value })}
                         placeholder="E.G. TWD"
+                        disabled={saving}
                     />
                 </div>
 
@@ -117,12 +124,14 @@ function UserSettings({ onUpdateSuccess }) {
                             onChange={(e) => setNewCategory(e.target.value)}
                             placeholder="NEW TAG"
                             style={{ flex: 1, marginBottom: 0 }}
+                            disabled={saving}
                         />
                         <button
                             className="pixel-button success"
                             type="button"
                             onClick={addCategory}
                             style={{ margin: 0 }}
+                            disabled={saving}
                         >
                             ADD
                         </button>
@@ -143,6 +152,7 @@ function UserSettings({ onUpdateSuccess }) {
                                     type="button"
                                     onClick={() => removeCategory(cat)}
                                     style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--pixel-danger)', fontWeight: 'bold' }}
+                                    disabled={saving}
                                 >
                                     X
                                 </button>
@@ -155,9 +165,14 @@ function UserSettings({ onUpdateSuccess }) {
                     className="pixel-button primary"
                     type="submit"
                     disabled={saving}
-                    style={{ width: '100%', marginTop: '1rem' }}
+                    style={{ width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
                 >
-                    {saving ? 'SAVING...' : 'SAVE CONFIG'}
+                    {saving ? (
+                        <>
+                            <div className="pixel-loader" style={{ width: '14px', height: '14px', border: '2px solid white' }}></div>
+                            SAVING...
+                        </>
+                    ) : 'SAVE CONFIG'}
                 </button>
             </form>
         </div>

@@ -1,9 +1,14 @@
+import { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { authService } from '../services/api';
+import LoadingScreen from './LoadingScreen';
 
 function Login({ onLoginSuccess }) {
+    const [isLoading, setIsLoading] = useState(false);
+
     const handleSuccess = async (response) => {
         const idToken = response.credential;
+        setIsLoading(true);
         try {
             const backendResponse = await authService.login(idToken);
             if (backendResponse.data.status === 'success') {
@@ -15,6 +20,8 @@ function Login({ onLoginSuccess }) {
         } catch (error) {
             console.error('Error handling login:', error);
             alert('SYSTEM ERROR: UNABLE TO CONNECT TO VAULT.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -33,6 +40,7 @@ function Login({ onLoginSuccess }) {
             color: 'white',
             padding: '2rem'
         }}>
+            {isLoading && <LoadingScreen text="AUTHENTICATING..." />}
             <div className="pixel-border" style={{
                 background: 'white',
                 color: '#212529',
