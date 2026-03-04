@@ -23,15 +23,6 @@ function App() {
     if (savedUser) {
       setUser(JSON.parse(savedUser))
     }
-
-    // Listen for authentication errors from the API service
-    const onAuthError = () => {
-      console.warn('Session expired or unauthorized, logging out...')
-      handleLogout()
-    }
-
-    window.addEventListener('auth-error', onAuthError)
-    return () => window.removeEventListener('auth-error', onAuthError)
   }, [])
 
   // Fetch detailed user info (categories, currency)
