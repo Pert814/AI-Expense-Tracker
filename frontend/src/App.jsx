@@ -30,7 +30,8 @@ function App() {
     if (user) {
       const initLoad = async () => {
         setIsDataLoading(true);
-        await Promise.all([fetchUserInfo(), fetchSummary()]);
+        const info = await fetchUserInfo();
+        await fetchSummary(info?.stats_start_date);
         setIsDataLoading(false);
       }
       initLoad();
@@ -41,18 +42,34 @@ function App() {
     try {
       const response = await userService.getInfo()
       if (response.data.status === 'success') {
-        setUserInfo(response.data.data)
+        const data = response.data.data
+        setUserInfo(data)
+        return data
       }
     } catch (err) {
       console.error('Failed to fetch user info:', err)
+      return null
     }
   }
 
-  const fetchSummary = async () => {
+  const fetchSummary = async (providedStartDate = null) => {
     try {
       const response = await expenseService.getAll()
       if (response.data.status === 'success') {
-        const data = response.data.data
+        let data = response.data.data
+
+        // Use provided start date or fallback to current userInfo state
+        const startDateStr = providedStartDate || userInfo?.stats_start_date;
+
+        if (startDateStr) {
+          const startDate = new Date(startDateStr);
+          data = data.filter(item => {
+            if (!item.date) return false;
+            const itemDate = new Date(item.date);
+            return itemDate >= startDate;
+          });
+        }
+
         const total = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
 
         // Calculate category distribution
@@ -83,6 +100,7 @@ function App() {
   // update user info in state
   const handleUserUpdate = (updatedInfo) => {
     setUserInfo(updatedInfo)
+    fetchSummary(updatedInfo?.stats_start_date)
   }
 
   if (!user) {

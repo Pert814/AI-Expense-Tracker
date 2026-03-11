@@ -22,6 +22,7 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     categories: Optional[list[str]] = None
     currency: Optional[str] = None
+    stats_start_date: Optional[str] = None  # Format: YYYY-MM-DD
 
 # Parse expense request model
 class ParseRequestModel(BaseModel):

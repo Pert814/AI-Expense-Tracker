@@ -35,7 +35,8 @@ function UserSettings({ onUpdateSuccess }) {
             const response = await userService.update({
                 name: userInfo.name,
                 categories: userInfo.categories,
-                currency: userInfo.currency
+                currency: userInfo.currency,
+                stats_start_date: userInfo.stats_start_date
             });
 
             if (response.data.status === 'success') {
@@ -110,6 +111,17 @@ function UserSettings({ onUpdateSuccess }) {
                         value={userInfo.currency || ''}
                         onChange={(e) => setUserInfo({ ...userInfo, currency: e.target.value })}
                         placeholder="E.G. TWD"
+                        disabled={saving}
+                    />
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.7rem' }}>STATS START DATE</label>
+                    <input
+                        className="pixel-input"
+                        type="date"
+                        value={userInfo.stats_start_date || ''}
+                        onChange={(e) => setUserInfo({ ...userInfo, stats_start_date: e.target.value })}
                         disabled={saving}
                     />
                 </div>

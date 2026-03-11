@@ -40,7 +40,8 @@ class Database:
                     "name": name,
                     "created_at": firestore.SERVER_TIMESTAMP,
                     "categories": ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Other"], # Default categories
-                    "currency": "USD"
+                    "currency": "USD",
+                    "stats_start_date": "2026-01-01" # Default start date for statistics
                 })
                 return True, "User initialized"
             user_data = doc.to_dict()
