@@ -112,7 +112,11 @@ function App() {
       {isDataLoading && <LoadingScreen text="SYNCING DATA..." />}
       <header className="app-header">
         <div className="logo">
-          <span style={{ fontSize: '1rem', fontWeight: 'bold' }}>AI-BANK</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 'bold', lineHeight: '1.2', display: 'block', textAlign: 'center' }}>
+            AI<br />
+            Expense<br />
+            Tracker
+          </span>
         </div>
         <nav className="nav-links">
           <button
@@ -150,18 +154,14 @@ function App() {
       </header>
 
       {/* User Status Bar */}
-      <div style={{ background: '#eee', padding: '5px 20px', display: 'flex', justifyContent: 'space-between', fontSize: '0.5rem', borderBottom: '2px solid #ccc' }}>
+      <div style={{ background: '#eee', padding: '5px 20px', display: 'flex', justifyContent: 'flex-end', fontSize: '0.5rem', borderBottom: '2px solid #ccc' }}>
         <span>PLAYER: {userInfo?.name || user.name}</span>
-        <span>VAULT: {summary.total} {userInfo?.currency || 'TWD'}</span>
       </div>
 
       <main className="pixel-container">
         {currentView === 'home' && (
           <div className="view-home">
-            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-              <h1 style={{ fontSize: '1.2rem', color: 'var(--pixel-dark)' }}>READY FOR ENTRY?</h1>
-              <p style={{ fontSize: '0.6rem', color: 'var(--pixel-gray)' }}>DESCRIBE YOUR SPENDING TO THE AI</p>
-            </div>
+
 
             <section style={{ marginBottom: '3rem' }}>
               <ExpenseInput onSuccess={() => setRefreshTrigger(prev => prev + 1)} />
@@ -198,7 +198,8 @@ function App() {
       </main>
 
       <footer style={{ textAlign: 'center', padding: '2rem', fontSize: '0.5rem', color: 'var(--pixel-gray)' }}>
-        AI-XPNS TRACKER v1.0 // NOSTALGIC EDITION
+        AI-XPNS TRACKER v1.0 // NOSTALGIC EDITION<br />
+        © 2026 CHIEN YU-HSUAN. ALL RIGHTS RESERVED.
       </footer>
     </div>
   )

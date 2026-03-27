@@ -7,9 +7,7 @@ function ExpenseAnalysis({ summary, userInfo }) {
 
     return (
         <div className="view-stats">
-            <h1 className="pixel-border" style={{ textAlign: 'center', background: '#4b0082', color: 'white', fontSize: '1rem' }}>
-                DATA ANALYSIS
-            </h1>
+
 
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '2rem' }}>
@@ -37,7 +35,7 @@ function ExpenseAnalysis({ summary, userInfo }) {
                             <div key={cat}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', marginBottom: '8px' }}>
                                     <span style={{ fontWeight: 'bold' }}>{cat.toUpperCase()}</span>
-                                    <span>{parseFloat(val).toFixed(0)} {userInfo?.currency} ({percentage}%)</span>
+                                    <span>{parseFloat(val).toFixed(0)} ({percentage}%)</span>
                                 </div>
                                 <div style={{ height: '16px', background: '#f0f0f0', border: '3px solid #212529', position: 'relative' }}>
                                     <div style={{
