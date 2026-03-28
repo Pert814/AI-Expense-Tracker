@@ -7,10 +7,47 @@ function ExpenseInput({ onSuccess }) {
     const [saving, setSaving] = useState(false);
     const [parsedData, setParsedData] = useState(null);
     const [error, setError] = useState(null);
+    const [isListening, setIsListening] = useState(false);
+
+    // Initialize Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+    if (recognition) {
+        recognition.continuous = false;
+        recognition.lang = 'zh-TW'; // Default to Traditional Chinese
+        recognition.interimResults = false;
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => setIsListening(false);
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            setError('VOICE ERROR: ' + event.error.toUpperCase());
+            setIsListening(false);
+        };
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            setText(transcript);
+            // Optionally, we could auto-trigger handleParse if it's high confidence
+        };
+    }
+
+    const toggleListening = () => {
+        if (!recognition) {
+            setError('BROWSER NOT SUPPORTED VOICE.');
+            return;
+        }
+        if (isListening) {
+            recognition.stop();
+        } else {
+            setError(null);
+            recognition.start();
+        }
+    };
 
     // Step 1: Parse the natural language text
     const handleParse = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         if (!text.trim()) return;
 
         setLoading(true);
@@ -60,14 +97,45 @@ function ExpenseInput({ onSuccess }) {
 
             {!parsedData ? (
                 <form onSubmit={handleParse}>
-                    <textarea
-                        className="pixel-input"
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        placeholder="E.G. I bought a coffee for 150 today"
-                        style={{ minHeight: '100px', resize: 'none' }}
-                        disabled={loading}
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <textarea
+                            className="pixel-input"
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                            placeholder="E.G. I bought a coffee for 150 today"
+                            style={{ minHeight: '200px', resize: 'none' }}
+                            disabled={loading || isListening}
+                        />
+                        <button
+                            type="button"
+                            onClick={toggleListening}
+                            className={`voice-button ${isListening ? 'listening' : ''}`}
+                            title={isListening ? 'Stop Listening' : 'Start Voice Input'}
+                        >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ imageRendering: 'pixelated' }}>
+                                {/* Mic Head */}
+                                <rect x="8" y="2" width="8" height="10" />
+                                <rect x="10" y="4" width="1" height="1" fill={isListening ? 'var(--pixel-danger)' : 'white'} />
+                                <rect x="13" y="4" width="1" height="1" fill={isListening ? 'var(--pixel-danger)' : 'white'} />
+                                <rect x="10" y="7" width="1" height="1" fill={isListening ? 'var(--pixel-danger)' : 'white'} />
+                                <rect x="13" y="7" width="1" height="1" fill={isListening ? 'var(--pixel-danger)' : 'white'} />
+                                
+                                {/* U-Stand */}
+                                <rect x="5" y="10" width="2" height="6" />
+                                <rect x="17" y="10" width="2" height="6" />
+                                <rect x="7" y="14" width="10" height="2" />
+                                
+                                {/* Base */}
+                                <rect x="11" y="16" width="2" height="3" />
+                                <rect x="8" y="19" width="8" height="2" />
+                            </svg>
+                        </button>
+                        {isListening && (
+                            <div className="listening-indicator">
+                                <span className="dot"></span> LISTENING...
+                            </div>
+                        )}
+                    </div>
                     <button
                         className="pixel-button primary"
                         type="submit"
