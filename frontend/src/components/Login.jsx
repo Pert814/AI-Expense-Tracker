@@ -60,7 +60,8 @@ function Login({ onLoginSuccess }) {
                     <GoogleLogin
                         onSuccess={handleSuccess}
                         onError={handleError}
-                        useOneTap
+                        //useOneTap
+                        // 我先刪掉快速登入 除錯
                     />
                 </div>
 
