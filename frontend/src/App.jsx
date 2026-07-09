@@ -164,9 +164,9 @@ function App() {
 
 
             <section style={{ marginBottom: '3rem' }}>
-              <ExpenseInput 
-                userInfo={userInfo} 
-                onSuccess={() => setRefreshTrigger(prev => prev + 1)} 
+              <ExpenseInput
+                userInfo={userInfo}
+                onSuccess={() => setRefreshTrigger(prev => prev + 1)}
               />
             </section>
 
