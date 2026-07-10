@@ -35,7 +35,6 @@ function Login({ onLoginSuccess }) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            height: '100vh',
             background: '#1a1a1a',
             color: 'white',
             padding: '2rem'
@@ -60,8 +59,6 @@ function Login({ onLoginSuccess }) {
                     <GoogleLogin
                         onSuccess={handleSuccess}
                         onError={handleError}
-                    //useOneTap
-                    // 我先刪掉快速登入 除錯
                     />
                 </div>
 

@@ -1,0 +1,9 @@
+App.jsx : React 專案的主要進入元件,可以想成是整個網站的「總指揮」。 
+/frontend/src/App.jsx
+
+api.js ： 整個前端跟後端溝通的「總機」
+/frontend/src/services/api.js
+
+Components file ： 前端網站的各個功能或頁面（零件）
+/frontend/src/components
+

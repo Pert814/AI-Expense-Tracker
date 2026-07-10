@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { expenseService } from '../services/api';
+import { guestExpenseService } from '../services/guestStorage';
 
-function ExpenseInput({ onSuccess, userInfo }) {
+function ExpenseInput({ onSuccess, userInfo, user }) {
+    const isGuest = !user;
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -48,7 +50,7 @@ function ExpenseInput({ onSuccess, userInfo }) {
     // Step 1: Parse the natural language text
     const handleParse = async (e) => {
         if (e) e.preventDefault();
-        if (!text.trim()) return;
+        if (!text.trim() || isGuest) return;
 
         setLoading(true);
         setError(null);
@@ -73,11 +75,19 @@ function ExpenseInput({ onSuccess, userInfo }) {
         setError(null);
 
         try {
-            const response = await expenseService.create(parsedData);
-            if (response.data.status === 'success') {
+            if (isGuest) {
+                // For guestmode to store data in localStorage, not in backend
+                guestExpenseService.create(parsedData);
                 setParsedData(null);
                 setText('');
                 if (onSuccess) onSuccess();
+            } else {
+                const response = await expenseService.create(parsedData);
+                if (response.data.status === 'success') {
+                    setParsedData(null);
+                    setText('');
+                    if (onSuccess) onSuccess();
+                }
             }
         } catch (err) {
             console.error('Saving error:', err);
@@ -90,6 +100,8 @@ function ExpenseInput({ onSuccess, userInfo }) {
     const handleFieldChange = (field, value) => {
         setParsedData(prev => ({ ...prev, [field]: value }));
     };
+
+    const isAiDisabled = loading || !text || isGuest;
 
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto' }}>
@@ -140,15 +152,26 @@ function ExpenseInput({ onSuccess, userInfo }) {
                         <button
                             className="pixel-button primary"
                             type="submit"
-                            disabled={loading || !text}
-                            style={{ width: '100%', margin: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                            disabled={isAiDisabled}
+                            title={isGuest ? 'LOGIN REQUIRED TO USE AI PARSING' : undefined}
+                            style={{
+                                width: '100%',
+                                margin: '0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '10px',
+                                background: isAiDisabled ? '#555' : undefined,
+                                color: isAiDisabled ? '#aaa' : undefined,
+                                cursor: isAiDisabled ? 'not-allowed' : 'pointer'
+                            }}
                         >
                             {loading ? (
                                 <>
                                     <div className="pixel-loader" style={{ width: '14px', height: '14px', border: '2px solid white' }}></div>
                                     AI ANALYZING...
                                 </>
-                            ) : 'SENT TO AI'}
+                            ) : isGuest ? '🔒 LOGIN TO USE AI' : 'SENT TO AI'}
                         </button>
                         <p style={{ fontSize: '0.5rem', marginTop: '10px', color: 'var(--pixel-gray)' }}>
                             USE NATURAL LANGUAGE. AI WILL EXTRACT DETAILS.

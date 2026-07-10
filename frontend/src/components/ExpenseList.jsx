@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { expenseService } from '../services/api';
+import { guestExpenseService } from '../services/guestStorage';
 
 // ExpenseList component for displaying expense history
-function ExpenseList({ refreshTrigger }) {
+function ExpenseList({ refreshTrigger, user }) {
+    const isGuest = !user;
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -12,19 +14,25 @@ function ExpenseList({ refreshTrigger }) {
         setLoading(true);
         setError(null);
         try {
-            const response = await expenseService.getAll();
-            if (response.data.status === 'success') {
-                const data = response.data.data;
-                // Sort by date descending (latest first)
-                const sortedData = Array.isArray(data)
-                    ? data.sort((a, b) => {
-                        const dateDiff = new Date(b.date) - new Date(a.date);
-                        if (dateDiff !== 0) return dateDiff;
-                        return (b.id || '').localeCompare(a.id || '');
-                    })
-                    : [];
-                setExpenses(sortedData);
+            let data;
+
+            if (isGuest) {
+                // For guest mode to read data from localStorage, not from backend
+                data = guestExpenseService.getAll();
+            } else {
+                const response = await expenseService.getAll();
+                data = response.data.status === 'success' ? response.data.data : [];
             }
+
+            // Sort by date descending (latest first)
+            const sortedData = Array.isArray(data)
+                ? data.sort((a, b) => {
+                    const dateDiff = new Date(b.date) - new Date(a.date);
+                    if (dateDiff !== 0) return dateDiff;
+                    return (b.id || '').localeCompare(a.id || '');
+                })
+                : [];
+            setExpenses(sortedData);
         } catch (err) {
             console.error('Error fetching expenses:', err);
             setError('Failed to load expense history.');
@@ -52,7 +60,7 @@ function ExpenseList({ refreshTrigger }) {
     // Fetch data on component mount or when refreshTrigger changes
     useEffect(() => {
         fetchExpenses();
-    }, [refreshTrigger]);
+    }, [refreshTrigger, isGuest]);
 
     if (loading && expenses.length === 0) return <p style={{ fontSize: '0.7rem' }}>LOADING DATA...</p>;
     if (error) return <p style={{ color: 'var(--pixel-danger)', fontSize: '0.7rem' }}>{error}</p>;

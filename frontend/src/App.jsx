@@ -7,11 +7,13 @@ import DailyExpenses from './components/DailyExpenses'
 import UserSettings from './components/UserSettings'
 import ExpenseAnalysis from './components/ExpenseAnalysis'
 import { userService, expenseService } from './services/api'
+import { guestExpenseService } from './services/guestStorage';
 import LoadingScreen from './components/LoadingScreen'
 
 function App() {
   const [user, setUser] = useState(null)
   const [userInfo, setUserInfo] = useState(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [currentView, setCurrentView] = useState('home') // 'home', 'stats', 'daily', or 'settings'
   const [summary, setSummary] = useState({ total: 0, count: 0 })
@@ -103,13 +105,81 @@ function App() {
     fetchSummary(updatedInfo?.stats_start_date)
   }
 
-  if (!user) {
-    return <Login onLoginSuccess={(userData) => setUser(userData)} />
-  }
+  const syncGuestDataToCloud = async () => {
+    const guestData = guestExpenseService.getAll();
+    if (guestData.length === 0) return;
+
+    const confirmed = window.confirm(
+        `FOUND ${guestData.length} LOCAL RECORD(S). SYNC TO YOUR ACCOUNT?`
+    );
+    if (!confirmed) return;
+
+    let successCount = 0;
+    const failedRecords = [];
+
+    for (const record of guestData) {
+        try {
+            const { id, createdAt, ...payload } = record; // 去掉本機專用欄位
+            const response = await expenseService.create(payload);
+            if (response.data.status === 'success') {
+                successCount++;
+            } else {
+                failedRecords.push(record);
+            }
+        } catch (err) {
+            console.error('Sync failed for record:', record, err);
+            failedRecords.push(record);
+        }
+    }
+
+    if (failedRecords.length === 0) {
+        // 全部成功才清空本機資料
+        guestExpenseService.clear();
+        alert(`SYNCED ${successCount} RECORD(S) SUCCESSFULLY.`);
+    } else {
+        alert(`SYNCED ${successCount}, FAILED ${failedRecords.length}. FAILED RECORDS KEPT LOCALLY, TRY AGAIN LATER.`);
+    }
+
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <div className="app-wrapper">
       {isDataLoading && <LoadingScreen text="SYNCING DATA..." />}
+      {showLoginModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.85)',
+          zIndex: 999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowLoginModal(false)}
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: 0,
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '1.5rem',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            <Login onLoginSuccess={(userData) => {
+              setUser(userData)
+              setShowLoginModal(false)
+              syncGuestDataToCloud()
+            }} />
+          </div>
+        </div>
+      )}
       <header className="app-header">
         <div className="logo">
           <span style={{ fontSize: '0.9rem', fontWeight: 'bold', lineHeight: '1.2', display: 'block', textAlign: 'center' }}>
@@ -147,15 +217,21 @@ function App() {
           >
             CONFIG
           </button>
-          <button className="pixel-button danger" onClick={handleLogout} style={{ fontSize: '0.6rem' }}>
-            EXIT
-          </button>
+          {user ? (
+            <button className="pixel-button danger" onClick={handleLogout} style={{ fontSize: '0.6rem' }}>
+              EXIT
+            </button>
+          ) : (
+            <button className="pixel-button primary" onClick={() => setShowLoginModal(true)} style={{ fontSize: '0.6rem' }}>
+              LOGIN
+            </button>
+          )}
         </nav>
       </header>
 
       {/* User Status Bar */}
       <div style={{ background: '#eee', padding: '5px 20px', display: 'flex', justifyContent: 'flex-end', fontSize: '0.5rem', borderBottom: '2px solid #ccc' }}>
-        <span>PLAYER: {userInfo?.name || user.name}</span>
+        <span>PLAYER: {userInfo?.name || user?.name || 'GUEST'}</span>
       </div>
 
       <main className="pixel-container">
@@ -166,13 +242,14 @@ function App() {
             <section style={{ marginBottom: '3rem' }}>
               <ExpenseInput
                 userInfo={userInfo}
+                user={user}
                 onSuccess={() => setRefreshTrigger(prev => prev + 1)}
               />
             </section>
 
             <section>
               <h2 style={{ fontSize: '0.8rem', textAlign: 'center', color: 'var(--pixel-gray)', marginBottom: '1.5rem' }}>RECENT ACTIVITY</h2>
-              <ExpenseList refreshTrigger={refreshTrigger} />
+              <ExpenseList refreshTrigger={refreshTrigger} user={user} />
             </section>
           </div>
         )}
