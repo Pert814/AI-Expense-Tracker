@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { userService } from '../services/api';
+import { userService } from '../services/api'; 
+import { guestUserService } from '../services/guestStorage';
 
-function UserSettings({ onUpdateSuccess }) {
+function UserSettings({ onUpdateSuccess, user }) {
+    const isGuest = !user;const [syncStatus, setSyncStatus] = useState('synced'); // synced | pending | offline | 'guest'
     const [userInfo, setUserInfo] = useState({ name: '', categories: [], currency: 'TWD' });
     const [newCategory, setNewCategory] = useState('');
     const [loading, setLoading] = useState(true);
@@ -10,42 +12,102 @@ function UserSettings({ onUpdateSuccess }) {
 
     useEffect(() => {
         fetchUserInfo();
-    }, []);
+    }, [user]);
 
     const fetchUserInfo = async () => {
+        if (isGuest) {
+            setUserInfo(guestUserService.getInfo());
+            setSyncStatus('guest');
+            setLoading(false);
+            return;
+        }
+
         try {
             const response = await userService.getInfo();
             if (response.data.status === 'success') {
                 setUserInfo(response.data.data);
+                // 拿到雲端最新設定，順便備份一份到本機（isPending = false，代表這份跟雲端一致）
+                guestUserService.update(response.data.data, false);
+                setSyncStatus('synced');
             }
         } catch (err) {
-            console.error('Failed to fetch user info:', err);
-            setMessage({ type: 'error', text: 'Failed to load user settings.' });
+            console.error('Failed to fetch user info, falling back to local cache:', err);
+            // 打不到後端（離線），退回讀本機備份
+            const cached = guestUserService.getInfo();
+            setUserInfo(cached);
+            setSyncStatus('offline');
+            setMessage({ type: 'error', text: 'OFFLINE: SHOWING LOCALLY CACHED SETTINGS.' });
         } finally {
             setLoading(false);
         }
-    };
+    };      
 
     const handleUpdateInfo = async (e) => {
         e.preventDefault();
         setSaving(true);
         setMessage({ type: '', text: '' });
 
+        const payload = {
+            name: userInfo.name,
+            categories: userInfo.categories,
+            currency: userInfo.currency,
+            stats_start_date: userInfo.stats_start_date
+        };
+
+        if (isGuest) {
+            guestUserService.update(payload, false);
+            setSyncStatus('guest');
+            setMessage({ type: 'success', text: 'SAVED LOCALLY (GUEST MODE).' });
+            if (onUpdateSuccess) onUpdateSuccess(userInfo);
+            setSaving(false);
+            return;
+        }
         try {
-            const response = await userService.update({
-                name: userInfo.name,
-                categories: userInfo.categories,
-                currency: userInfo.currency,
-                stats_start_date: userInfo.stats_start_date
-            });
+            const response = await userService.update(payload);
 
             if (response.data.status === 'success') {
+                // 存後端成功，順便更新本機備份，並清掉待同步標記
+                guestUserService.update(payload, false);
+                guestUserService.clearPendingSync();
+                setSyncStatus('synced');
                 setMessage({ type: 'success', text: 'Settings updated successfully!' });
                 if (onUpdateSuccess) onUpdateSuccess(userInfo);
             }
         } catch (err) {
-            console.error('Failed to update user info:', err);
-            setMessage({ type: 'error', text: 'Failed to save settings.' });
+            console.error('Failed to update user info, saving locally instead:', err);
+            // 打不到後端（離線），先存本機，標記待同步
+            guestUserService.update(payload, true);
+            setSyncStatus('pending');
+            setMessage({ type: 'error', text: 'OFFLINE: SAVED LOCALLY. WILL SYNC WHEN ONLINE.' });
+        } finally {
+            setSaving(false);
+        }
+        };
+    
+    // for login user without internet can sync to cloud later
+    const handleSyncNow = async () => {
+        if (isGuest) return; // 訪客沒有雲端可以同步
+
+        setSaving(true);
+        setMessage({ type: '', text: '' });
+
+        try {
+            const localData = guestUserService.getInfo();
+            const response = await userService.update({
+                name: localData.name,
+                categories: localData.categories,
+                currency: localData.currency,
+                stats_start_date: localData.stats_start_date
+            });
+
+            if (response.data.status === 'success') {
+                guestUserService.clearPendingSync();
+                setSyncStatus('synced');
+                setMessage({ type: 'success', text: 'SYNCED TO CLOUD SUCCESSFULLY!' });
+            }
+        } catch (err) {
+            console.error('Manual sync failed:', err);
+            setMessage({ type: 'error', text: 'SYNC FAILED. STILL OFFLINE?' });
         } finally {
             setSaving(false);
         }
@@ -66,7 +128,7 @@ function UserSettings({ onUpdateSuccess }) {
             ...userInfo,
             categories: userInfo.categories.filter(cat => cat !== catToRemove)
         });
-    };
+};
 
     if (loading) return (
         <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -78,6 +140,43 @@ function UserSettings({ onUpdateSuccess }) {
     return (
         <div className="pixel-border" style={{ maxWidth: '600px', margin: '20px auto', textAlign: 'left' }}>
             <h2 style={{ marginBottom: '20px', fontSize: '1rem' }}>USER PROFILE</h2>
+
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '20px',
+                fontSize: '0.6rem',
+                color:
+                    syncStatus === 'synced' ? 'var(--pixel-success)' :
+                    syncStatus === 'pending' ? 'var(--pixel-danger)' :
+                    'var(--pixel-gray)'
+            }}>
+                <span style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: 'currentColor',
+                    display: 'inline-block'
+                }}></span>
+                {syncStatus === 'synced' && 'SYNCED WITH CLOUD'}
+                {syncStatus === 'pending' && (
+                    <>
+                        LOCAL CHANGES NOT YET SYNCED
+                        <button
+                            type="button"
+                            className="pixel-button primary"
+                            onClick={handleSyncNow}
+                            disabled={saving}
+                            style={{ fontSize: '0.5rem', padding: '2px 8px', margin: 0 }}
+                        >
+                            {saving ? 'SYNCING...' : 'SYNC NOW'}
+                        </button>
+                    </>
+                )}
+                {syncStatus === 'offline' && 'OFFLINE — SHOWING LOCAL CACHE'}
+                {syncStatus === 'guest' && 'GUEST MODE — LOCAL ONLY, LOGIN TO SYNC TO CLOUD'}
+            </div>
 
             {message.text && (
                 <div className="pixel-border" style={{

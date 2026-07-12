@@ -197,25 +197,27 @@ function App() {
             ENTRY
           </button>
           <button
-            className={`pixel-button ${currentView === 'stats' ? 'primary' : ''}`}
-            onClick={() => setCurrentView('stats')}
-            style={{ fontSize: '0.6rem' }}
+              className={`pixel-button ${currentView === 'stats' ? 'primary' : ''}`}
+              onClick={() => user ? setCurrentView('stats') : setShowLoginModal(true)}
+              title={!user ? 'LOGIN REQUIRED' : undefined}
+              style={{ fontSize: '0.6rem', opacity: user ? 1 : 0.5 }}
           >
-            STATS
+              STATS{!user && ' 🔒'}
           </button>
           <button
-            className={`pixel-button ${currentView === 'daily' ? 'primary' : ''}`}
-            onClick={() => setCurrentView('daily')}
-            style={{ fontSize: '0.6rem' }}
+              className={`pixel-button ${currentView === 'daily' ? 'primary' : ''}`}
+              onClick={() => user ? setCurrentView('daily') : setShowLoginModal(true)}
+              title={!user ? 'LOGIN REQUIRED' : undefined}
+              style={{ fontSize: '0.6rem', opacity: user ? 1 : 0.5 }}
           >
-            LOGS
+              LOGS{!user && ' 🔒'}
           </button>
           <button
-            className={`pixel-button ${currentView === 'settings' ? 'primary' : ''}`}
-            onClick={() => setCurrentView('settings')}
-            style={{ fontSize: '0.6rem' }}
+              className={`pixel-button ${currentView === 'settings' ? 'primary' : ''}`}
+              onClick={() => setCurrentView('settings')}
+              style={{ fontSize: '0.6rem' }}
           >
-            CONFIG
+              CONFIG
           </button>
           {user ? (
             <button className="pixel-button danger" onClick={handleLogout} style={{ fontSize: '0.6rem' }}>
@@ -272,7 +274,7 @@ function App() {
             <h1 className="pixel-border" style={{ textAlign: 'center', background: 'var(--pixel-primary)', color: 'white', fontSize: '1rem' }}>
               SYSTEM CONFIG
             </h1>
-            <UserSettings onUpdateSuccess={handleUserUpdate} />
+            <UserSettings onUpdateSuccess={handleUserUpdate} user={user} />
           </div>
         )}
       </main>
