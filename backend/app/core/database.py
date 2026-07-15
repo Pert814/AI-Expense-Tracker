@@ -27,26 +27,93 @@ class Database:
         self.db = firestore.client()
 
     
-    # Check if user exists, if not create user document with default fields
+    # Check if user exists, if not create user document with default fields.
+    # Automatically migrates legacy user data (Google sub ID) to the new Firebase UID.
     def check_user_exists(self, user_id, email, name):
         try:
+            # 1. Search for legacy user document with the same email
+            old_user_doc = None
+            legacy_query = self.db.collection("users").where("email", "==", email).get()
+            for d in legacy_query:
+                if d.id != user_id:
+                    old_user_doc = d
+                    break
+            
             user_ref = self.db.collection("users").document(user_id)
             doc = user_ref.get()
             
+            # If a legacy document exists, perform migration
+            if old_user_doc:
+                old_id = old_user_doc.id
+                print(f"[INFO] Found legacy user document '{old_id}' for email '{email}'. Migrating data...")
+                old_data = old_user_doc.to_dict()
+                
+                # Check if the new user document exists
+                if not doc.exists:
+                    # Copy user settings to the new user doc
+                    user_ref.set({
+                        "email": email,
+                        "name": name,
+                        "created_at": old_data.get("created_at") or firestore.SERVER_TIMESTAMP,
+                        "categories": old_data.get("categories", ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Other"]),
+                        "currency": old_data.get("currency", "USD"),
+                        "stats_start_date": old_data.get("stats_start_date", "2026-01-01")
+                    })
+                else:
+                    # New user doc already exists, make sure settings are merged if missing in new doc
+                    new_data = doc.to_dict()
+                    update_payload = {}
+                    if "categories" not in new_data or not new_data["categories"]:
+                        update_payload["categories"] = old_data.get("categories", [])
+                    if "currency" not in new_data:
+                        update_payload["currency"] = old_data.get("currency", "USD")
+                    if "stats_start_date" not in new_data:
+                        update_payload["stats_start_date"] = old_data.get("stats_start_date", "2026-01-01")
+                    if update_payload:
+                        user_ref.update(update_payload)
+                
+                # 2. Migrate expenses subcollection
+                old_expenses_ref = self.db.collection("users").document(old_id).collection("expenses")
+                new_expenses_ref = self.db.collection("users").document(user_id).collection("expenses")
+                
+                old_expenses = old_expenses_ref.get()
+                batch = self.db.batch()
+                count = 0
+                
+                for exp_doc in old_expenses:
+                    batch.set(new_expenses_ref.document(exp_doc.id), exp_doc.to_dict())
+                    batch.delete(exp_doc.reference)
+                    count += 1
+                    if count >= 200:  # Avoid exceeding Firestore batch limit of 500
+                        batch.commit()
+                        batch = self.db.batch()
+                        count = 0
+                
+                if count > 0:
+                    batch.commit()
+                    
+                # 3. Delete the old user document
+                old_user_doc.reference.delete()
+                print(f"[INFO] Successfully migrated {email} from '{old_id}' to '{user_id}'.")
+                return True, "User migrated"
+            
+            # If no legacy document exists
             if not doc.exists:
-                print(f"[INFO] New user detected: {user_id}. Initializing...")
+                # Initialize default values for brand new users
+                print(f"[INFO] No legacy data found for {email}. Initializing default profile.")
                 user_ref.set({
                     "email": email,
                     "name": name,
                     "created_at": firestore.SERVER_TIMESTAMP,
-                    "categories": ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Other"], # Default categories
+                    "categories": ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Other"],
                     "currency": "USD",
-                    "stats_start_date": "2026-01-01" # Default start date for statistics
+                    "stats_start_date": "2026-01-01"
                 })
                 return True, "User initialized"
-            user_data = doc.to_dict()
+            
             return True, "User exists"
         except Exception as e:
+            print(f"[ERROR] check_user_exists failed: {e}")
             return False, str(e)
 
     # method to get user categories

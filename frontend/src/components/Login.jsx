@@ -1,20 +1,22 @@
 import { useState } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../firebase';
 import { authService } from '../services/api';
 import LoadingScreen from './LoadingScreen';
 
+// login component with firebase google sign in
 function Login({ onLoginSuccess }) {
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleSuccess = async (response) => {
-        const idToken = response.credential;
+    const handleGoogleSignIn = async () => {
         setIsLoading(true);
         try {
-            const backendResponse = await authService.login(idToken);
+            const result = await signInWithPopup(auth, googleProvider);
+            const firebaseIdToken = await result.user.getIdToken();
+            const backendResponse = await authService.login(firebaseIdToken);
             if (backendResponse.data.status === 'success') {
                 const userData = backendResponse.data.user;
                 localStorage.setItem('user', JSON.stringify(userData));
-                localStorage.setItem('token', idToken);
                 onLoginSuccess(userData);
             }
         } catch (error) {
@@ -23,10 +25,6 @@ function Login({ onLoginSuccess }) {
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const handleError = () => {
-        console.log('Login Failed');
     };
 
     return (
@@ -39,7 +37,7 @@ function Login({ onLoginSuccess }) {
             color: 'white',
             padding: '2rem'
         }}>
-            {isLoading && <LoadingScreen text="AUTHENTICATING..." />}
+            {isLoading && <LoadingScreen text="AUTHENTICATING & SYNCING..." />}
             <div className="pixel-border" style={{
                 background: 'white',
                 color: '#212529',
@@ -56,10 +54,14 @@ function Login({ onLoginSuccess }) {
                 </p>
 
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-                    <GoogleLogin
-                        onSuccess={handleSuccess}
-                        onError={handleError}
-                    />
+                    <button
+                        className="pixel-button primary"
+                        onClick={handleGoogleSignIn}
+                        disabled={isLoading}
+                        style={{ fontSize: '0.7rem', padding: '0.8rem 1.5rem' }}
+                    >
+                        SIGN IN WITH GOOGLE
+                    </button>
                 </div>
 
                 <p style={{ fontSize: '0.4rem', color: 'var(--pixel-gray)', marginTop: '2rem' }}>

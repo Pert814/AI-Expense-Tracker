@@ -9,6 +9,7 @@ import ExpenseAnalysis from './components/ExpenseAnalysis'
 import { userService, expenseService } from './services/api'
 import { guestExpenseService } from './services/guestStorage';
 import LoadingScreen from './components/LoadingScreen'
+import { useRegisterSW } from 'virtual:pwa-register/react'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -18,6 +19,23 @@ function App() {
   const [currentView, setCurrentView] = useState('home') // 'home', 'stats', 'daily', or 'settings'
   const [summary, setSummary] = useState({ total: 0, count: 0 })
   const [isDataLoading, setIsDataLoading] = useState(false)
+
+  // use package from pwa to check if there is a new version
+  const {
+    needRefresh: [needRefresh, setNeedRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
+    onRegisteredSW(swUrl, registration) {
+      console.log('[PWA] Service Worker registered:', swUrl);
+      // check for new version every login
+      registration && setInterval(() => {
+        registration.update();
+      }, 60 * 60 * 1000); // check new version every hour
+    },
+    onRegisterError(error) {
+      console.error('[PWA] Service Worker registration error:', error);
+    },
+  })
 
   // check localStorage for user info
   useEffect(() => {
@@ -145,6 +163,38 @@ function App() {
 
   return (
     <div className="app-wrapper">
+      {needRefresh && (
+          <div style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.9)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+          }}>
+              <div className="pixel-border" style={{
+                  background: 'white',
+                  textAlign: 'center',
+                  padding: '3rem 2rem',
+                  maxWidth: '400px'
+              }}>
+                  <h2 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--pixel-primary)' }}>
+                      🆕 NEW VERSION AVAILABLE
+                  </h2>
+                  <p style={{ fontSize: '0.6rem', marginBottom: '2rem', lineHeight: '1.8', color: 'var(--pixel-gray)' }}>
+                      AN UPDATE IS READY. PLEASE REFRESH TO CONTINUE.
+                  </p>
+                  <button
+                      className="pixel-button primary"
+                      onClick={() => updateServiceWorker(true)}
+                      style={{ width: '100%', margin: 0, fontSize: '0.7rem', padding: '0.8rem' }}
+                  >
+                      UPDATE NOW
+                  </button>
+              </div>
+          </div>
+      )}
       {isDataLoading && <LoadingScreen text="SYNCING DATA..." />}
       {showLoginModal && (
         <div style={{

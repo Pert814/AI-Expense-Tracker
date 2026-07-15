@@ -1,3 +1,4 @@
+Frontend :
 App.jsx : React 專案的主要進入元件,可以想成是整個網站的「總指揮」。 
 /frontend/src/App.jsx
 
@@ -7,3 +8,10 @@ api.js ： 整個前端跟後端溝通的「總機」
 Components file ： 前端網站的各個功能或頁面（零件）
 /frontend/src/components
 
+firebase.js ： 為了登入功能擴展,整個前端頁面「跟 Firebase 建立連線」的唯一入口,
+其他檔案要用 Firebase 的任何功能,都要從這裡拿。
+/frontend/src/firebase.js
+
+Backend : 
+database.py ： 負責連結firebase資料庫,初始化firebase_admin及定義其資料庫操作
+/backend/database.py

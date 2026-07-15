@@ -5,10 +5,8 @@ import os
 from app.core.parser import expense_parser
 from app.core.database import db_client
 from app.core.models import ExpenseRecord, UserUpdate, ParseRequestModel, TokenBody
-from google.oauth2 import id_token
-from google.auth.transport import requests
 import firebase_admin
-from firebase_admin import auth, credentials
+from firebase_admin import auth as firebase_auth
 from fastapi.middleware.cors import CORSMiddleware
 
 # Initialize FastAPI application
@@ -30,19 +28,14 @@ app.add_middleware(
 # read GOOGLE_CLIENT_ID from .env
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
-# dependency to initialize Google Auth verification
+# use fire
 async def get_current_user_id(authorization: str = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
-    token = authorization.split("Bearer ")[1] # get token from header
+    token = authorization.split("Bearer ")[1]
     try:
-        # Verify Google ID token
-        idinfo = id_token.verify_oauth2_token(
-            token,
-            requests.Request(),
-            GOOGLE_CLIENT_ID
-        )
-        return idinfo['sub']
+        decoded_token = firebase_auth.verify_id_token(token)
+        return decoded_token['uid']
     except Exception as e:
         print(f"❌ Token verification failed: {e}")
         raise HTTPException(status_code=401, detail="Invalid ID token")
@@ -51,14 +44,12 @@ async def get_current_user_id(authorization: str = Header(None)):
 @app.post("/auth/google")
 async def google_auth(body: TokenBody):
     try:
-        idinfo = id_token.verify_oauth2_token(
-            body.id_token,  # The user get this token after login in Google
-            requests.Request(), 
-            GOOGLE_CLIENT_ID
-        )
-        user_id = idinfo['sub']  # Google unique user ID
-        email = idinfo.get('email')
-        name = idinfo.get('name')
+        # Since frontend authenticates via Firebase Client SDK and sends the Firebase ID token,
+        # we verify it using Firebase Admin SDK instead of Google OAuth2 verification.
+        decoded_token = firebase_auth.verify_id_token(body.id_token)
+        user_id = decoded_token['uid']  # Firebase unique user ID
+        email = decoded_token.get('email')
+        name = decoded_token.get('name')
 
         print(f"✅ Google Auth Success: {name} ({email})")
 
@@ -69,8 +60,9 @@ async def google_auth(body: TokenBody):
             "status": "success",
             "user": {"id": user_id, "name": name, "email": email}
         }
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Google Token verification failed")
+    except Exception as e:
+        print(f"❌ Token verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Token verification failed")
 
 # parse expense from gemini AI
 @app.post("/parse_expense")
