@@ -17,7 +17,7 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [currentView, setCurrentView] = useState('home') // 'home', 'stats', 'daily', or 'settings'
-  const [summary, setSummary] = useState({ total: 0, count: 0 })
+  const [allExpenses, setAllExpenses] = useState([])
   const [isDataLoading, setIsDataLoading] = useState(false)
 
   // use package from pwa to check if there is a new version
@@ -45,13 +45,13 @@ function App() {
     }
   }, [])
 
-  // Fetch detailed user info (categories, currency)
+  // fetch user info and all expenses
   useEffect(() => {
     if (user) {
       const initLoad = async () => {
         setIsDataLoading(true);
-        const info = await fetchUserInfo();
-        await fetchSummary(info?.stats_start_date);
+        await fetchUserInfo();
+        await fetchAllExpenses();
         setIsDataLoading(false);
       }
       initLoad();
@@ -72,40 +72,15 @@ function App() {
     }
   }
 
-  const fetchSummary = async (providedStartDate = null) => {
+  // fetch all expenses
+  const fetchAllExpenses = async () => {
     try {
-      const response = await expenseService.getAll()
-      if (response.data.status === 'success') {
-        let data = response.data.data
-
-        // Use provided start date or fallback to current userInfo state
-        const startDateStr = providedStartDate || userInfo?.stats_start_date;
-
-        if (startDateStr) {
-          const startDate = new Date(startDateStr);
-          data = data.filter(item => {
-            if (!item.date) return false;
-            const itemDate = new Date(item.date);
-            return itemDate >= startDate;
-          });
+        const response = await expenseService.getAll()
+        if (response.data.status === 'success') {
+            setAllExpenses(response.data.data)
         }
-
-        const total = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
-
-        // Calculate category distribution
-        const cats = {}
-        data.forEach(item => {
-          cats[item.category] = (cats[item.category] || 0) + (parseFloat(item.amount) || 0)
-        })
-
-        setSummary({
-          total: total.toFixed(2),
-          count: data.length,
-          categories: Object.entries(cats).sort((a, b) => b[1] - a[1])
-        })
-      }
     } catch (err) {
-      console.error('Failed to fetch summary:', err)
+        console.error('Failed to fetch expenses:', err)
     }
   }
 
@@ -117,12 +92,12 @@ function App() {
     setUserInfo(null)
   }
 
-  // update user info in state
+  // update user info
   const handleUserUpdate = (updatedInfo) => {
     setUserInfo(updatedInfo)
-    fetchSummary(updatedInfo?.stats_start_date)
   }
 
+  // sync guest data to cloud
   const syncGuestDataToCloud = async () => {
     const guestData = guestExpenseService.getAll();
     if (guestData.length === 0) return;
@@ -307,7 +282,7 @@ function App() {
         )}
 
         {currentView === 'stats' && (
-          <ExpenseAnalysis summary={summary} userInfo={userInfo} />
+          <ExpenseAnalysis expenses={allExpenses} userInfo={userInfo} />
         )}
 
         {currentView === 'daily' && (
