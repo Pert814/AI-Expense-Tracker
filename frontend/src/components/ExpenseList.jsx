@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { expenseService } from '../services/api';
-import { guestExpenseService } from '../services/guestStorage';
+import { guestExpenseService, expenseCacheService } from '../services/guestStorage';
 
 // ExpenseList component for displaying expense history
 function ExpenseList({ refreshTrigger, user }) {
@@ -8,34 +8,51 @@ function ExpenseList({ refreshTrigger, user }) {
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    // 排序邏輯func，快取資料跟雲端資料都會用到
+    const sortExpenses = (data) => {
+        return Array.isArray(data)
+            ? [...data].sort((a, b) => {
+                const dateDiff = new Date(b.date) - new Date(a.date);
+                if (dateDiff !== 0) return dateDiff;
+                return (b.id || '').localeCompare(a.id || '');
+            })
+            : [];
+    };
 
-    // method to fetch user data from backend endpoint
+    //method to fetch user data from backend endpoint or localstorage
     const fetchExpenses = async () => {
-        setLoading(true);
+        // 訪客模式：完全只碰localstorage，邏輯不變
+        if (isGuest) {
+            setExpenses(sortExpenses(guestExpenseService.getAll()));
+            setLoading(false);
+            return;
+        }
+
+        // 登入模式：先看有沒有localstorage，有的話立刻顯示
+        const cached = expenseCacheService.get(user.id);
+        if (cached) {
+            setExpenses(sortExpenses(cached));
+            setLoading(false); // 已經有東西可以看，不用轉圈圈
+        } else {
+            setLoading(true); // 從沒快取過（第一次用這台裝置），才顯示 loading
+        }
+
         setError(null);
+
+        // 不管有沒有快取，都去背景抓雲端最新資料
         try {
-            let data;
+            const response = await expenseService.getAll();
+            const data = response.data.status === 'success' ? response.data.data : [];
+            const sorted = sortExpenses(data);
 
-            if (isGuest) {
-                // For guest mode to read data from localStorage, not from backend
-                data = guestExpenseService.getAll();
-            } else {
-                const response = await expenseService.getAll();
-                data = response.data.status === 'success' ? response.data.data : [];
-            }
-
-            // Sort by date descending (latest first)
-            const sortedData = Array.isArray(data)
-                ? data.sort((a, b) => {
-                    const dateDiff = new Date(b.date) - new Date(a.date);
-                    if (dateDiff !== 0) return dateDiff;
-                    return (b.id || '').localeCompare(a.id || '');
-                })
-                : [];
-            setExpenses(sortedData);
+            setExpenses(sorted);                      // 更新畫面成最新的
+            expenseCacheService.set(user.id, sorted);  // 順便更新本機快取，當下次的鏡子
         } catch (err) {
             console.error('Error fetching expenses:', err);
-            setError('Failed to load expense history.');
+            // 已經有快取顯示著的話，這次抓失敗就不跳錯誤，維持顯示快取即可
+            if (!cached) {
+                setError('Failed to load expense history.');
+            }
         } finally {
             setLoading(false);
         }

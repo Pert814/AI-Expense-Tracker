@@ -1,5 +1,7 @@
+@import url("https://fontsapi.zeoseven.com/925/main/result.css");
+
 :root {
-  font-family: 'Press Start 2P', system-ui, -apple-system, sans-serif;
+  font-family: 'Press Start 2P', 'Ark Pixel 12px Prop latin', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -14,6 +16,13 @@
   --pixel-dark: #212529;
   --pixel-white: #ffffff;
   --pixel-gray: #adafbc;
+}
+
+/* 中文、日文都用粗體，搭配像素英文字比較不突兀 */
+:lang(zh),
+:lang(ja) {
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 * {

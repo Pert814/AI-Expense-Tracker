@@ -86,3 +86,33 @@ export const guestUserService = {
     hasPendingSync: () => localStorage.getItem(PENDING_SYNC_KEY) === 'true',
     clearPendingSync: () => localStorage.removeItem(PENDING_SYNC_KEY),
 };
+
+// ===== 以下是「登入使用者」的本機資料快取（跟訪客資料分開，避免混在一起）=====
+
+function cacheKey(userId) {
+    return `cached_expenses:${userId}`;
+}
+
+export const expenseCacheService = {
+    // 讀取某個使用者的本機快取資料，沒有快取過就回傳 null
+    get: (userId) => {
+        try {
+            const raw = localStorage.getItem(cacheKey(userId));
+            return raw ? JSON.parse(raw) : null;
+        } catch (err) {
+            console.error('Failed to read expense cache:', err);
+            return null;
+        }
+    },
+
+    // 把雲端抓到的最新資料，存一份鏡子到本機
+    set: (userId, data) => {
+        try {
+            localStorage.setItem(cacheKey(userId), JSON.stringify(data));
+        } catch (err) {
+            console.error('Failed to write expense cache:', err);
+        }
+    },
+
+    clear: (userId) => localStorage.removeItem(cacheKey(userId)),
+};
