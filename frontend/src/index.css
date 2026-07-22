@@ -324,7 +324,7 @@ h4 {
   gap: 15px;
   pointer-events: none;
   font-weight: bold;
-  animation: pixel-pulse-text 0.8s interface infinite;
+  animation: pixel-pulse-text 0.8s ease-in-out infinite;
   text-shadow: 4px 4px 0 rgba(0,0,0,0.1);
   background: rgba(255,255,255,0.8);
   padding: 20px;

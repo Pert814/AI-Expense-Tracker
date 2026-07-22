@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';   
 import { expenseService } from '../services/api';
 import { guestExpenseService } from '../services/guestStorage';
 
@@ -11,39 +11,53 @@ function ExpenseInput({ onSuccess, userInfo, user }) {
     const [error, setError] = useState(null);
     const [isListening, setIsListening] = useState(false);
 
-    // Initialize Speech Recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
-
-    if (recognition) {
-        recognition.continuous = false;
-        recognition.lang = 'zh-TW'; // Default to Traditional Chinese
-        recognition.interimResults = false;
-
-        recognition.onstart = () => setIsListening(true);
-        recognition.onend = () => setIsListening(false);
-        recognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-            setError('VOICE ERROR: ' + event.error.toUpperCase());
-            setIsListening(false);
-        };
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            setText(transcript);
-            // Optionally, we could auto-trigger handleParse if it's high confidence
-        };
-    }
+    const recognitionRef = useRef(null);
 
     const toggleListening = () => {
-        if (!recognition) {
-            setError('BROWSER NOT SUPPORTED VOICE.');
-            return;
-        }
         if (isListening) {
-            recognition.stop();
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
         } else {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                setError('BROWSER NOT SUPPORTED VOICE.');
+                return;
+            }
+            
             setError(null);
-            recognition.start();
+            const rec = new SpeechRecognition();
+            rec.continuous = false;
+            rec.lang = 'zh-TW'; // Default to Traditional Chinese
+            rec.interimResults = false;
+
+            rec.onstart = () => {
+                setIsListening(true);
+            };
+            rec.onend = () => {
+                setIsListening(false);
+                recognitionRef.current = null;
+            };
+            rec.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                setError('VOICE ERROR: ' + event.error.toUpperCase());
+                setIsListening(false);
+                recognitionRef.current = null;
+            };
+            rec.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                setText(transcript);
+            };
+
+            recognitionRef.current = rec;
+            try {
+                rec.start();
+            } catch (err) {
+                console.error('Failed to start speech recognition:', err);
+                setError('FAILED TO START VOICE INPUT.');
+                setIsListening(false);
+                recognitionRef.current = null;
+            }
         }
     };
 
@@ -144,8 +158,25 @@ function ExpenseInput({ onSuccess, userInfo, user }) {
                                 </svg>
                             </button>
                             {isListening && (
-                                <div className="listening-indicator">
-                                    <span className="dot"></span> LISTENING...
+                                <div className="listening-indicator" style={{ pointerEvents: 'auto' }}>
+                                    <div>
+                                        <span className="dot"></span> LISTENING...
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="pixel-button danger"
+                                        onClick={toggleListening}
+                                        style={{
+                                            marginTop: '15px',
+                                            padding: '8px 16px',
+                                            fontSize: '0.75rem',
+                                            margin: '0',
+                                            cursor: 'pointer',
+                                            zIndex: 20
+                                        }}
+                                    >
+                                        STOP SPEAKING
+                                    </button>
                                 </div>
                             )}
                         </div>
