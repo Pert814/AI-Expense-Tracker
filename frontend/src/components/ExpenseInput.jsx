@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';   
 import { expenseService } from '../services/api';
-import { guestExpenseService } from '../services/guestStorage';
+import { useExpenses } from '../context/ExpenseContext';
 
-function ExpenseInput({ onSuccess, userInfo, user }) {
+function ExpenseInput({ userInfo, user }) {
     const isGuest = !user;
+    const { addExpense } = useExpenses();
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -89,20 +90,9 @@ function ExpenseInput({ onSuccess, userInfo, user }) {
         setError(null);
 
         try {
-            if (isGuest) {
-                // For guestmode to store data in localStorage, not in backend
-                guestExpenseService.create(parsedData);
-                setParsedData(null);
-                setText('');
-                if (onSuccess) onSuccess();
-            } else {
-                const response = await expenseService.create(parsedData);
-                if (response.data.status === 'success') {
-                    setParsedData(null);
-                    setText('');
-                    if (onSuccess) onSuccess();
-                }
-            }
+            await addExpense(parsedData);
+            setParsedData(null);
+            setText('');
         } catch (err) {
             console.error('Saving error:', err);
             setError('Failed to save record.');

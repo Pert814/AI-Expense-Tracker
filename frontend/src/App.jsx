@@ -10,17 +10,51 @@ import { userService, expenseService } from './services/api'
 import { guestExpenseService } from './services/guestStorage';
 import LoadingScreen from './components/LoadingScreen'
 import { useRegisterSW } from 'virtual:pwa-register/react'
+import { ExpenseProvider, useExpenses } from './context/ExpenseContext'
+import { auth } from './firebase'
 
+// 整個app的狀態從這裡開始定義
 function App() {
-  const [user, setUser] = useState(null)
+  // 宣告登入狀態，從localStorage中讀取
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  // 宣告驗證狀態
+  const [authReady, setAuthReady] = useState(false);
+
+  // 監聽登入狀態來更新驗證狀態
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      setAuthReady(true);
+      if (firebaseUser) {
+      } else {
+        const saved = localStorage.getItem('user');
+        if (saved) {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          setUser(null);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <ExpenseProvider user={user} authReady={authReady}>
+      <AppContent user={user} setUser={setUser} authReady={authReady} />
+    </ExpenseProvider>
+  )
+}
+
+// 定義如何渲染主介面的AppContent（主內容）
+function AppContent({ user, setUser, authReady }) {
   const [userInfo, setUserInfo] = useState(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [currentView, setCurrentView] = useState('home') // 'home', 'stats', 'daily', or 'settings'
-  const [allExpenses, setAllExpenses] = useState([])
   const [isDataLoading, setIsDataLoading] = useState(false)
+  const { fetchExpenses, expenses } = useExpenses()
 
-  // use package from pwa to check if there is a new version
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
@@ -37,26 +71,19 @@ function App() {
     },
   })
 
-  // check localStorage for user info
+  // fetch user info (only when auth is verified and ready)
   useEffect(() => {
-    const savedUser = localStorage.getItem('user')
-    if (savedUser) {
-      setUser(JSON.parse(savedUser))
-    }
-  }, [])
-
-  // fetch user info and all expenses
-  useEffect(() => {
-    if (user) {
+    if (user && authReady) {
       const initLoad = async () => {
         setIsDataLoading(true);
         await fetchUserInfo();
-        await fetchAllExpenses();
         setIsDataLoading(false);
       }
       initLoad();
+    } else {
+      setUserInfo(null)
     }
-  }, [user, refreshTrigger])
+  }, [user, authReady])
 
   const fetchUserInfo = async () => {
     try {
@@ -69,18 +96,6 @@ function App() {
     } catch (err) {
       console.error('Failed to fetch user info:', err)
       return null
-    }
-  }
-
-  // fetch all expenses
-  const fetchAllExpenses = async () => {
-    try {
-        const response = await expenseService.getAll()
-        if (response.data.status === 'success') {
-            setAllExpenses(response.data.data)
-        }
-    } catch (err) {
-        console.error('Failed to fetch expenses:', err)
     }
   }
 
@@ -133,8 +148,11 @@ function App() {
         alert(`SYNCED ${successCount}, FAILED ${failedRecords.length}. FAILED RECORDS KEPT LOCALLY, TRY AGAIN LATER.`);
     }
 
-    setRefreshTrigger(prev => prev + 1);
+    // Refresh context data
+    await fetchExpenses();
   };
+
+  const showGlobalLoading = isDataLoading || (user && !authReady);
 
   return (
     <div className="app-wrapper">
@@ -170,7 +188,7 @@ function App() {
               </div>
           </div>
       )}
-      {isDataLoading && <LoadingScreen text="SYNCING DATA..." />}
+      {showGlobalLoading && <LoadingScreen text={isDataLoading ? "SYNCING DATA..." : "INITIALIZING SYSTEM..."} />}
       {showLoginModal && (
         <div style={{
           position: 'fixed',
@@ -264,25 +282,22 @@ function App() {
       <main className="pixel-container">
         {currentView === 'home' && (
           <div className="view-home">
-
-
             <section style={{ marginBottom: '3rem' }}>
               <ExpenseInput
                 userInfo={userInfo}
                 user={user}
-                onSuccess={() => setRefreshTrigger(prev => prev + 1)}
               />
             </section>
 
             <section>
               <h2 style={{ fontSize: '0.8rem', textAlign: 'center', color: 'var(--pixel-gray)', marginBottom: '1.5rem' }}>RECENT ACTIVITY</h2>
-              <ExpenseList refreshTrigger={refreshTrigger} user={user} />
+              <ExpenseList user={user} />
             </section>
           </div>
         )}
 
         {currentView === 'stats' && (
-          <ExpenseAnalysis expenses={allExpenses} userInfo={userInfo} />
+          <ExpenseAnalysis userInfo={userInfo} />
         )}
 
         {currentView === 'daily' && (
@@ -313,4 +328,3 @@ function App() {
 }
 
 export default App
-

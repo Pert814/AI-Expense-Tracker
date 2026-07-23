@@ -1,35 +1,14 @@
 import { useState, useEffect } from 'react';
-import { expenseService } from '../services/api';
 import EditExpenseModal from './EditExpenseModal';
+import { useExpenses } from '../context/ExpenseContext';
 
 function DailyExpenses() {
+    const { expenses, loading } = useExpenses();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [viewDate, setViewDate] = useState(new Date());
-    const [expenses, setExpenses] = useState([]);
     const [dailyExpenses, setDailyExpenses] = useState([]);
-    const [loading, setLoading] = useState(false);
     const [selectedExpense, setSelectedExpense] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
-
-    // Fetch all expenses initially to filter by date locally
-    const fetchExpenses = async () => {
-        setLoading(true);
-        try {
-            const response = await expenseService.getAll();
-            if (response.data.status === 'success') {
-                const data = response.data.data;
-                setExpenses(Array.isArray(data) ? data : []);
-            }
-        } catch (err) {
-            console.error('Error fetching expenses:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchExpenses();
-    }, []);
 
     // Helper to format date to YYYY-MM-DD local string
     const formatLocalDate = (date) => {
@@ -194,7 +173,6 @@ function DailyExpenses() {
                         setShowEditModal(false);
                         setSelectedExpense(null);
                     }}
-                    onSave={fetchExpenses}
                 />
             )}
         </div>

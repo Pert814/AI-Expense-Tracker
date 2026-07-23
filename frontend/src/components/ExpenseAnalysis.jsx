@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { useExpenses } from '../context/ExpenseContext';
 
-function ExpenseAnalysis({ expenses, userInfo }) {
+function ExpenseAnalysis({ userInfo }) {
+    const { expenses, loading } = useExpenses();
     const CHART_COLORS = ['#209cee', '#92cc41', '#f7d51d', '#e76e55', '#adafbc', '#212529', '#7e57c2', '#00acc1'];
     const [periodMode, setPeriodMode] = useState('month');
     const [periodOffset, setPeriodOffset] = useState(0);
@@ -116,6 +118,16 @@ function ExpenseAnalysis({ expenses, userInfo }) {
             }))
         };
     }, [expenses, periodRange, userInfo?.currency]);
+    
+    // 顯示loading 或是 還沒登入
+    if ((loading && expenses.length === 0) || !userInfo) {
+        return (
+            <div style={{ textAlign: 'center', padding: '50px' }}>
+                <div className="pixel-loader"></div>
+                <p style={{ fontSize: '0.6rem', marginTop: '10px' }}>LOADING DATA...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="view-stats">

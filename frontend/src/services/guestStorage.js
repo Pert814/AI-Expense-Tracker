@@ -1,6 +1,6 @@
+// Read guest data
 const GUEST_KEY = 'guest_expenses';
 
-// Read guest data
 function readAll() {
     try {
         const raw = localStorage.getItem(GUEST_KEY);
@@ -49,7 +49,7 @@ export const guestExpenseService = {
     hasData: () => readAll().length > 0,
 };
 
-// Guest settings
+// Guest settings in CONFIG
 
 const GUEST_SETTINGS_KEY = 'guest_settings';
 const PENDING_SYNC_KEY = 'guest_settings_pending_sync';
@@ -86,6 +86,7 @@ export const guestUserService = {
     hasPendingSync: () => localStorage.getItem(PENDING_SYNC_KEY) === 'true',
     clearPendingSync: () => localStorage.removeItem(PENDING_SYNC_KEY),
 };
+
 
 // ===== 以下是「登入使用者」的本機資料快取（跟訪客資料分開，避免混在一起）=====
 

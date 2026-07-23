@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { expenseService } from '../services/api';
+import { useExpenses } from '../context/ExpenseContext';
 
-function EditExpenseModal({ expense, onClose, onSave }) {
+function EditExpenseModal({ expense, onClose }) {
+    const { updateExpense } = useExpenses();
     const [formData, setFormData] = useState({
         item: expense.item || '',
         amount: expense.amount || '',
@@ -24,11 +25,8 @@ function EditExpenseModal({ expense, onClose, onSave }) {
         setError(null);
 
         try {
-            const response = await expenseService.update(expense.id, formData);
-            if (response.data.status === 'success') {
-                onSave();
-                onClose();
-            }
+            await updateExpense(expense.id, formData);
+            onClose();
         } catch (err) {
             console.error('Error updating record:', err);
             setError('Failed to update the record. Please try again.');
