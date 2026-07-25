@@ -133,7 +133,7 @@ function ExpenseAnalysis({ userInfo }) {
         <div className="view-stats">
             {/* 期間模式切換 */}
             <div className="pixel-border" style={{ background: 'white', marginBottom: '1.5rem', textAlign: 'center' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '15px' }}>
+                <div className="period-mode-buttons" style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '15px' }}>
                     <button
                         className={`pixel-button ${periodMode === 'month' ? 'primary' : ''}`}
                         onClick={() => { setPeriodMode('month'); setPeriodOffset(0); }}
@@ -158,7 +158,7 @@ function ExpenseAnalysis({ userInfo }) {
                 </div>
 
                 {(periodMode === 'month' || periodMode === 'year') && (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px' }}>
+                    <div className="period-nav" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px' }}>
                         <button
                             className="pixel-button"
                             onClick={() => setPeriodOffset(prev => prev - 1)}
@@ -180,7 +180,7 @@ function ExpenseAnalysis({ userInfo }) {
                 )}
 
                 {periodMode === 'custom' && (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <div className="period-custom-range" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                         <input
                             className="pixel-input"
                             type="date"

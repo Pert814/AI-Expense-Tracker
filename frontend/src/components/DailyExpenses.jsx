@@ -68,7 +68,7 @@ function DailyExpenses() {
             {/* Calendar Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '30px' }}>
                 {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-                    <div key={day} style={{ textAlign: 'center', fontWeight: 'bold', padding: '10px', fontSize: '0.6rem', color: 'var(--pixel-gray)' }}>{day}</div>
+                    <div key={day} className="calendar-weekday" style={{ textAlign: 'center', fontWeight: 'bold', padding: '10px', fontSize: '0.6rem', color: 'var(--pixel-gray)' }}>{day}</div>
                 ))}
 
                 {Array.from({ length: startOffset }).map((_, i) => (
@@ -95,7 +95,7 @@ function DailyExpenses() {
                         <div
                             key={day}
                             onClick={() => handleDateClick(day)}
-                            className="pixel-button"
+                            className="pixel-button calendar-day"
                             style={{
                                 padding: '10px 0',
                                 textAlign: 'center',

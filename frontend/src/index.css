@@ -375,4 +375,53 @@ h4 {
   .logo {
     padding: 0.5rem;
   }
+  /* Mobile Calendar (DailyExpenses) */
+  .calendar-day {
+    padding: 6px 0 !important;
+    margin: 0 !important;
+    font-size: 0.55rem !important;
+    border-width: 2px !important;
+    box-shadow:
+      -2px 0 0 -1px #212529,
+      2px 0 0 -1px #212529,
+      0 -2px 0 -1px #212529,
+      0 2px 0 -1px #212529 !important;
+  }
+
+  .calendar-weekday {
+    padding: 4px !important;
+    font-size: 0.45rem !important;
+  }
+   /* Mobile Stats Period Selector */
+  .period-mode-buttons {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+
+  .period-mode-buttons .pixel-button {
+    padding: 0.4rem 0.6rem !important;
+    margin: 2px !important;
+    font-size: 0.55rem !important;
+  }
+
+  .period-nav {
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+
+  .period-nav .pixel-button {
+    padding: 0.4rem 0.6rem !important;
+    margin: 2px !important;
+    font-size: 0.55rem !important;
+  }
+
+  .period-nav span {
+    font-size: 0.6rem !important;
+    min-width: auto !important;
+  }
+
+  .period-custom-range input[type="date"] {
+    font-size: 0.6rem !important;
+    padding: 0.4rem !important;
+  }
 }

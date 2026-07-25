@@ -12,23 +12,35 @@ import LoadingScreen from './components/LoadingScreen'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { ExpenseProvider, useExpenses } from './context/ExpenseContext'
 import { auth } from './firebase'
+import { signOut } from 'firebase/auth'
 
-// 整個app的狀態從這裡開始定義
+// 整個app從這裡開始定義
 function App() {
-  // 宣告登入狀態，從localStorage中讀取
+  // 從localStorage讀使用者資料 或者 宣告成null
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
-  // 宣告驗證狀態
+  // 宣告驗證狀態(firebase),初始為false
   const [authReady, setAuthReady] = useState(false);
 
   // 監聽登入狀態來更新驗證狀態
   useEffect(() => {
+    // auth.onAuthStateChanged是一個監聽器函式，它會監聽firebase的登入狀態
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      // 監聽到結果,設定setAuthReady為true
       setAuthReady(true);
       if (firebaseUser) {
+        // 設定firebaseUser至user state中
+        const userData = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName,
+          email: firebaseUser.email,
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
       } else {
+        // 如果firebase中找不到user（或登出），清除user state
         const saved = localStorage.getItem('user');
         if (saved) {
           localStorage.removeItem('user');
@@ -40,6 +52,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  // 輸出畫面(JSX)並傳入user state和authReady作為props
   return (
     <ExpenseProvider user={user} authReady={authReady}>
       <AppContent user={user} setUser={setUser} authReady={authReady} />
@@ -55,23 +68,25 @@ function AppContent({ user, setUser, authReady }) {
   const [isDataLoading, setIsDataLoading] = useState(false)
   const { fetchExpenses, expenses } = useExpenses()
 
+  // PWA 的狀態，用來監聽新版本的更新
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl, registration) {
       console.log('[PWA] Service Worker registered:', swUrl);
-      // check for new version every login
+      // 設定每小時檢查一次新版本
       registration && setInterval(() => {
         registration.update();
-      }, 60 * 60 * 1000); // check new version every hour
+      }, 60 * 60 * 1000); 
     },
+    // 如果註冊失敗，console在伺服器
     onRegisterError(error) {
       console.error('[PWA] Service Worker registration error:', error);
     },
   })
 
-  // fetch user info (only when auth is verified and ready)
+  // 監聽user狀態，authReady的變化去獲取userinfo(config)
   useEffect(() => {
     if (user && authReady) {
       const initLoad = async () => {
@@ -85,6 +100,7 @@ function AppContent({ user, setUser, authReady }) {
     }
   }, [user, authReady])
 
+  // 獲取userinfo(config)函式
   const fetchUserInfo = async () => {
     try {
       const response = await userService.getInfo()
@@ -100,19 +116,24 @@ function AppContent({ user, setUser, authReady }) {
   }
 
   // logout function 
-  const handleLogout = () => {
-    localStorage.removeItem('user')
-    localStorage.removeItem('token')
+  const handleLogout = async () => {
+    //firebase 登出,前棉的unsubscribe會自動監聽到登出狀態並刪除localstorage中的user和token
+    try {
+        await signOut(auth);
+    } catch (err) {
+        console.error('Firebase sign out failed:', err);
+    }
+    // 重置user state
     setUser(null)
     setUserInfo(null)
   }
 
-  // update user info
+  // update user info函式
   const handleUserUpdate = (updatedInfo) => {
     setUserInfo(updatedInfo)
   }
 
-  // sync guest data to cloud
+  // sync guest data to cloud函式
   const syncGuestDataToCloud = async () => {
     const guestData = guestExpenseService.getAll();
     if (guestData.length === 0) return;
