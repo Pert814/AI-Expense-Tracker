@@ -115,7 +115,12 @@ function DailyExpenses() {
 
             {/* Daily Expense List */}
             <div style={{ borderTop: '4px solid #212529', paddingTop: '20px' }}>
-                <h3 style={{ fontSize: '0.8rem' }}>{selectedDate.toDateString()}</h3>
+                <h3 style={{ fontSize: '0.8rem', marginBottom: '5px' }}>{selectedDate.toDateString()}</h3>
+                {dailyExpenses.length > 0 && (
+                    <p style={{ fontSize: '0.55rem', color: 'var(--pixel-gray)', marginBottom: '15px' }}>
+                        💡 EDIT A RECORD BY TAPPING ON IT!
+                    </p>
+                )}
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '20px' }}>
                         <div className="pixel-loader"></div>

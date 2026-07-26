@@ -52,7 +52,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // 輸出畫面(JSX)並傳入user state和authReady作為props
+  // 輸出畫面(JSX)並作為props傳入user state和authReady
   return (
     <ExpenseProvider user={user} authReady={authReady}>
       <AppContent user={user} setUser={setUser} authReady={authReady} />
@@ -115,7 +115,7 @@ function AppContent({ user, setUser, authReady }) {
     }
   }
 
-  // logout function 
+  // logout 函式
   const handleLogout = async () => {
     //firebase 登出,前棉的unsubscribe會自動監聽到登出狀態並刪除localstorage中的user和token
     try {
@@ -173,8 +173,10 @@ function AppContent({ user, setUser, authReady }) {
     await fetchExpenses();
   };
 
+  // showing loading screen if isDataLoading or (user and not authReady)
   const showGlobalLoading = isDataLoading || (user && !authReady);
 
+  // 輸出畫面(JSX)
   return (
     <div className="app-wrapper">
       {needRefresh && (

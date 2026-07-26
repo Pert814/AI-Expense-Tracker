@@ -1,4 +1,4 @@
-// Read guest data
+// ===== 訪客模式 - 記帳資料 =====
 const GUEST_KEY = 'guest_expenses';
 
 function readAll() {
@@ -10,11 +10,9 @@ function readAll() {
         return [];
     }
 }
-// Write guest data from local storage
 function writeAll(list) {
     localStorage.setItem(GUEST_KEY, JSON.stringify(list));
 }
-
 export const guestExpenseService = {
     getAll: () => readAll(),
 
@@ -49,8 +47,7 @@ export const guestExpenseService = {
     hasData: () => readAll().length > 0,
 };
 
-// Guest settings in CONFIG
-
+// 使用者設定(訪客模式)
 const GUEST_SETTINGS_KEY = 'guest_settings';
 const PENDING_SYNC_KEY = 'guest_settings_pending_sync';
 
@@ -116,4 +113,34 @@ export const expenseCacheService = {
     },
 
     clear: (userId) => localStorage.removeItem(cacheKey(userId)),
+};
+
+
+// ===== 自訂幣別存入快取（跟訪客/登入身份無關，存在本機給下拉選單用）=====
+const CUSTOM_CURRENCIES_KEY = 'custom_currencies';
+
+export const customCurrencyService = {
+    // 讀取使用者自己新增過的幣別代碼清單，例如 ['AUD', 'SGD']
+    getAll: () => {
+        try {
+            const raw = localStorage.getItem(CUSTOM_CURRENCIES_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch (err) {
+            console.error('Failed to load custom currencies:', err);
+            return [];
+        }
+    },
+
+    // 新增一個自訂幣別代碼（會先轉大寫、去除重複）
+    add: (code) => {
+        const normalized = code.trim().toUpperCase();
+        if (!normalized) return customCurrencyService.getAll();
+
+        const existing = customCurrencyService.getAll();
+        if (existing.includes(normalized)) return existing;
+
+        const updated = [...existing, normalized];
+        localStorage.setItem(CUSTOM_CURRENCIES_KEY, JSON.stringify(updated));
+        return updated;
+    },
 };

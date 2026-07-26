@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
 import { userService } from '../services/api'; 
-import { guestUserService } from '../services/guestStorage';
+import { guestUserService, customCurrencyService } from '../services/guestStorage';
 
 function UserSettings({ onUpdateSuccess, user }) {
-    const isGuest = !user;const [syncStatus, setSyncStatus] = useState('synced'); // synced | pending | offline | 'guest'
+    const isGuest = !user;
+    const [syncStatus, setSyncStatus] = useState('synced'); // synced | pending | offline | 'guest'
+    const [customCurrencies, setCustomCurrencies] = useState(() => {
+        const saved = customCurrencyService.getAll();
+        const defaults = ['TWD', 'JPY', 'USD'];
+        return [...new Set([...defaults, ...saved])];
+    });
+    const [customCurrencyValue, setCustomCurrencyValue] = useState('');
     const [userInfo, setUserInfo] = useState({ name: '', categories: [], currency: 'TWD' });
     const [newCategory, setNewCategory] = useState('');
     const [loading, setLoading] = useState(true);
@@ -204,14 +211,47 @@ function UserSettings({ onUpdateSuccess, user }) {
 
                 <div style={{ marginBottom: '20px' }}>
                     <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.7rem' }}>CURRENCY</label>
-                    <input
+                    <select
                         className="pixel-input"
-                        type="text"
-                        value={userInfo.currency || ''}
+                        value={userInfo.currency === '__ADD_NEW__' ? '__ADD_NEW__' : (userInfo.currency || '')}
                         onChange={(e) => setUserInfo({ ...userInfo, currency: e.target.value })}
-                        placeholder="E.G. TWD"
                         disabled={saving}
-                    />
+                    >
+                        {customCurrencies.map(cur => (
+                            <option key={cur} value={cur}>{cur}</option>
+                        ))}
+                        <option value="__ADD_NEW__">+ ADD NEW CURRENCY...</option>
+                    </select>
+
+                    {userInfo.currency === '__ADD_NEW__' && (
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                            <input
+                                className="pixel-input"
+                                type="text"
+                                value={customCurrencyValue}
+                                onChange={(e) => setCustomCurrencyValue(e.target.value)}
+                                placeholder="E.G. AUD"
+                                style={{ flex: 1, marginBottom: 0 }}
+                                disabled={saving}
+                            />
+                            <button
+                                type="button"
+                                className="pixel-button success"
+                                onClick={() => {
+                                    if (!customCurrencyValue.trim()) return;
+                                    const updated = customCurrencyService.add(customCurrencyValue);
+                                    const merged = [...new Set(['TWD', 'JPY', 'USD', ...updated])];
+                                    setCustomCurrencies(merged);
+                                    setUserInfo(prev => ({ ...prev, currency: customCurrencyValue.trim().toUpperCase() }));
+                                    setCustomCurrencyValue('');
+                                }}
+                                style={{ margin: 0 }}
+                                disabled={saving}
+                            >
+                                ADD
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
