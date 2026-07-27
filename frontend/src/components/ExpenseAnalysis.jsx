@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useExpenses } from '../context/ExpenseContext';
 
 function ExpenseAnalysis({ userInfo }) {
@@ -201,7 +201,7 @@ function ExpenseAnalysis({ userInfo }) {
             </div>
 
             {/* Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '2rem' }}>
+            <div className="stats-summary-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '2rem' }}>
                 <div className="pixel-border" style={{ textAlign: 'center', background: 'white', borderBottom: '8px solid var(--pixel-danger)' }}>
                     <p style={{ fontSize: '0.5rem', marginBottom: '10px' }}>TOTAL SPENT</p>
                     <h2 style={{ margin: 0, color: 'var(--pixel-danger)', fontSize: '1.2rem' }}>{stats.total}</h2>
@@ -236,22 +236,27 @@ function ExpenseAnalysis({ userInfo }) {
                     <h3 style={{ fontSize: '0.7rem', marginBottom: '15px', color: 'var(--pixel-dark)', textAlign: 'center' }}>
                         CATEGORY BREAKDOWN
                     </h3>
-                    <ResponsiveContainer width="100%" height={280}>
+                    <ResponsiveContainer width="100%" height={320}>
                         <PieChart>
                             <Pie
                                 data={stats.categories.map(([cat, val]) => ({ name: cat, value: val }))}
                                 dataKey="value"
                                 nameKey="name"
                                 cx="50%"
-                                cy="50%"
-                                outerRadius={100}
-                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                cy="45%"
+                                outerRadius={90}
                             >
                                 {stats.categories.map((_, index) => (
                                     <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                                 ))}
                             </Pie>
                             <Tooltip formatter={(value) => `${stats.currency} ${parseFloat(value).toFixed(0)}`} />
+                            <Legend
+                                layout="horizontal"
+                                verticalAlign="bottom"
+                                align="center"
+                                wrapperStyle={{ fontSize: '0.6rem', paddingTop: '10px' }}
+                            />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>

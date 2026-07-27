@@ -1,20 +1,21 @@
+import { useState } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
+import EditExpenseModal from './EditExpenseModal';
 
-// ExpenseList component for displaying expense history
+// 這版面只想顯示日期 所以定義這個函式
+function formatDateShort(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const [, month, day] = parts;
+    return `${month}/${day}`;
+}
+
+
 function ExpenseList({ user }) {
-    const { expenses, loading, error, deleteExpense, fetchExpenses } = useExpenses();
-
-    // method to delete user record
-    const handleDelete = async (recordId) => {
-        if (!window.confirm('Are you sure you want to delete this record?')) return;
-
-        try {
-            await deleteExpense(recordId);
-        } catch (err) {
-            console.error('Error deleting record:', err);
-            alert('Failed to delete the record.');
-        }
-    };
+    const { expenses, loading, error, fetchExpenses } = useExpenses();
+    const [selectedExpense, setSelectedExpense] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     if (loading && expenses.length === 0) return <p style={{ fontSize: '0.7rem' }}>LOADING DATA...</p>;
     if (error) return <p style={{ color: 'var(--pixel-danger)', fontSize: '0.7rem' }}>{error}</p>;
@@ -40,39 +41,40 @@ function ExpenseList({ user }) {
                         <thead>
                             <tr>
                                 <th>DATE</th>
-                                <th>TYPE</th>
                                 <th>ITEM</th>
                                 <th style={{ textAlign: 'right' }}>CASH</th>
-                                <th style={{ textAlign: 'center' }}>ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {expenses.slice(0, 5).map((expense, index) => (
-                                <tr key={expense.id || index}>
-                                    <td>{expense.date}</td>
-                                    <td>
-                                        <span style={{ color: 'var(--pixel-primary)' }}>
-                                            {expense.category}
-                                        </span>
-                                    </td>
+                            {expenses.slice(0, 10).map((expense, index) => (
+                                <tr
+                                    key={expense.id || index}
+                                    onClick={() => {
+                                        setSelectedExpense(expense);
+                                        setShowEditModal(true);
+                                    }}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <td>{formatDateShort(expense.date)}</td>
                                     <td>{expense.item}</td>
                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                                        {expense.amount}
-                                    </td>
-                                    <td style={{ textAlign: 'center' }}>
-                                        <button
-                                            className="pixel-button danger"
-                                            onClick={() => handleDelete(expense.id || index)}
-                                            style={{ fontSize: '0.5rem', padding: '4px 8px' }}
-                                        >
-                                            DEL
-                                        </button>
+                                        {expense.amount}{expense.currency || ''}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
+            )}
+
+            {showEditModal && selectedExpense && (
+                <EditExpenseModal
+                    expense={selectedExpense}
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setSelectedExpense(null);
+                    }}
+                />
             )}
         </div>
     );

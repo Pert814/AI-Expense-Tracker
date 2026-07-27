@@ -10,7 +10,7 @@ function DailyExpenses() {
     const [selectedExpense, setSelectedExpense] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
 
-    // Helper to format date to YYYY-MM-DD local string
+    // 定義日期格式
     const formatLocalDate = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -18,6 +18,7 @@ function DailyExpenses() {
         return `${year}-${month}-${day}`;
     };
 
+    // 顯示當天支出
     useEffect(() => {
         const formattedSelected = formatLocalDate(selectedDate);
         const filtered = expenses.filter(exp => exp.date === formattedSelected);
@@ -116,11 +117,6 @@ function DailyExpenses() {
             {/* Daily Expense List */}
             <div style={{ borderTop: '4px solid #212529', paddingTop: '20px' }}>
                 <h3 style={{ fontSize: '0.8rem', marginBottom: '5px' }}>{selectedDate.toDateString()}</h3>
-                {dailyExpenses.length > 0 && (
-                    <p style={{ fontSize: '0.55rem', color: 'var(--pixel-gray)', marginBottom: '15px' }}>
-                        💡 EDIT A RECORD BY TAPPING ON IT!
-                    </p>
-                )}
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: '20px' }}>
                         <div className="pixel-loader"></div>
@@ -154,7 +150,7 @@ function DailyExpenses() {
                                         </span>
                                     </td>
                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                                        {exp.amount}
+                                        {exp.amount}{exp.currency || ''}
                                     </td>
                                 </tr>
                             ))}
@@ -168,6 +164,11 @@ function DailyExpenses() {
                             </tr>
                         </tfoot>
                     </table>
+                )}
+                {dailyExpenses.length > 0 && (
+                    <p style={{ fontSize: '0.55rem', color: 'var(--pixel-gray)', marginBottom: '15px' }}>
+                        💡 EDIT A RECORD BY TAPPING ON IT!
+                    </p>
                 )}
             </div>
 

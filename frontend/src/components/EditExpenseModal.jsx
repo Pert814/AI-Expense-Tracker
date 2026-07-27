@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
 
 function EditExpenseModal({ expense, onClose }) {
-    const { updateExpense } = useExpenses();
+    const { updateExpense, deleteExpense } = useExpenses();
     const [formData, setFormData] = useState({
         item: expense.item || '',
         amount: expense.amount || '',
@@ -14,11 +14,13 @@ function EditExpenseModal({ expense, onClose }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // 更改按鈕
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // 儲存按鈕
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -35,6 +37,23 @@ function EditExpenseModal({ expense, onClose }) {
         }
     };
 
+    //  刪除按鈕
+    const handleDelete = async () => {
+        if (!window.confirm('Are you sure you want to delete this record?')) return;
+
+        setLoading(true);
+        setError(null);
+        try {
+            await deleteExpense(expense.id);
+            onClose();
+        } catch (err) {
+            console.error('Error deleting record:', err);
+            setError('Failed to delete the record.');
+            setLoading(false);
+        }
+    };
+
+    // 版面配置
     return (
         <div style={{
             position: 'fixed',
@@ -115,21 +134,31 @@ function EditExpenseModal({ expense, onClose }) {
                         />
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', marginTop: '20px' }}>
                         <button
                             type="button"
-                            className="pixel-button"
-                            onClick={onClose}
-                        >
-                            CLOSE
-                        </button>
-                        <button
-                            type="submit"
-                            className="pixel-button primary"
+                            className="pixel-button danger"
+                            onClick={handleDelete}
                             disabled={loading}
                         >
-                            {loading ? 'WAIT...' : 'SAVE'}
+                            DELETE
                         </button>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                type="button"
+                                className="pixel-button"
+                                onClick={onClose}
+                            >
+                                CLOSE
+                            </button>
+                            <button
+                                type="submit"
+                                className="pixel-button primary"
+                                disabled={loading}
+                            >
+                                {loading ? 'WAIT...' : 'SAVE'}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

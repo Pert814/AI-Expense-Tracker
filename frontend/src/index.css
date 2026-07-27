@@ -1,3 +1,6 @@
+/* ============================================
+   1. 字型引入 & CSS 變數
+   ============================================ */
 @import url("https://fontsapi.zeoseven.com/925/main/result.css");
 
 :root {
@@ -18,13 +21,9 @@
   --pixel-gray: #adafbc;
 }
 
-/* 中文、日文都用粗體，搭配像素英文字比較不突兀 */
-:lang(zh),
-:lang(ja) {
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
+/* ============================================
+   2. 全域重置 & 基礎排版
+   ============================================ */
 * {
   box-sizing: border-box;
   image-rendering: pixelated;
@@ -52,7 +51,16 @@ h4 {
   line-height: 1.4;
 }
 
-/* Pixel Borders */
+/* 中文、日文都用粗體，搭配像素英文字比較不突兀 */
+:lang(zh),
+:lang(ja) {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================
+   3. 像素風基礎元件（Border / Button / Input）
+   ============================================ */
 .pixel-border {
   border: 4px solid #212529;
   position: relative;
@@ -65,7 +73,6 @@ h4 {
     0 4px 0 -2px #212529;
 }
 
-/* Pixel Button */
 .pixel-button {
   display: inline-block;
   padding: 0.5rem 1rem;
@@ -111,7 +118,6 @@ h4 {
   color: black;
 }
 
-/* Pixel Input */
 .pixel-input {
   display: block;
   width: 100%;
@@ -129,14 +135,15 @@ h4 {
   outline: none;
 }
 
-/* Container */
+/* ============================================
+   4. 版面容器 & Header 導覽
+   ============================================ */
 .pixel-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
 }
 
-/* App Header */
 .app-header {
   background: var(--pixel-dark);
   color: white;
@@ -164,7 +171,9 @@ h4 {
   text-decoration: underline;
 }
 
-/* Table */
+/* ============================================
+   5. 表格
+   ============================================ */
 .pixel-table {
   width: 100%;
   border-collapse: collapse;
@@ -184,7 +193,9 @@ h4 {
   color: white;
 }
 
-/* Loading Animations */
+/* ============================================
+   6. Loading 動畫
+   ============================================ */
 @keyframes pixel-bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
@@ -240,7 +251,9 @@ h4 {
   animation: pixel-spin 2s steps(8) infinite;
 }
 
-/* Voice Input Styles Redesign V3 - Swapped Positions */
+/* ============================================
+   7. 語音輸入元件
+   ============================================ */
 .voice-button {
   position: absolute;
   left: 50%;
@@ -272,13 +285,12 @@ h4 {
   border-color: #610000;
 }
 
-/* Pixel Microphone Icon V3 - Pro Studio Style */
 .pixel-mic {
   width: 14px;
   height: 20px;
   background: #212529;
   position: relative;
-  box-shadow: 
+  box-shadow:
     -2px -4px 0 0 #212529, 2px -4px 0 0 #212529, /* Top roundness */
     -4px -2px 0 0 #212529, 4px -2px 0 0 #212529, /* Upper curve */
     -4px 0 0 0 #212529, 4px 0 0 0 #212529,       /* Middle body */
@@ -288,7 +300,6 @@ h4 {
     -8px 8px 0 0 #212529, 0 8px 0 0 #212529, 8px 8px 0 0 #212529; /* Base */
 }
 
-/* Grill details */
 .pixel-mic::before {
   content: '';
   position: absolute;
@@ -316,7 +327,7 @@ h4 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 1rem; /* Much larger in center */
+  font-size: 1rem;
   color: var(--pixel-danger);
   display: flex;
   flex-direction: column;
@@ -351,8 +362,12 @@ h4 {
   50% { opacity: 0; }
 }
 
-/* Responsive: Mobile Header */
+/* ============================================
+   8. 響應式：手機版覆蓋（統一放在這裡，唯一一個斷點）
+   ============================================ */
 @media (max-width: 600px) {
+
+  /* --- Header 導覽 --- */
   .app-header {
     flex-direction: column;
     align-items: stretch;
@@ -375,7 +390,8 @@ h4 {
   .logo {
     padding: 0.5rem;
   }
-  /* Mobile Calendar (DailyExpenses) */
+
+  /* --- 日曆（DailyExpenses）--- */
   .calendar-day {
     padding: 6px 0 !important;
     margin: 0 !important;
@@ -392,7 +408,8 @@ h4 {
     padding: 4px !important;
     font-size: 0.45rem !important;
   }
-   /* Mobile Stats Period Selector */
+
+  /* --- STATS 期間切換 --- */
   .period-mode-buttons {
     flex-wrap: wrap;
     gap: 6px !important;
@@ -405,7 +422,7 @@ h4 {
   }
 
   .period-nav {
-    flex-wrap: wrap;
+    flex-wrap: nowrap !important;
     gap: 8px !important;
   }
 
@@ -416,12 +433,33 @@ h4 {
   }
 
   .period-nav span {
-    font-size: 0.6rem !important;
-    min-width: auto !important;
+    font-size: 0.55rem !important;
+    min-width: 0 !important;
+    flex: 1;
+    text-align: center;
   }
 
   .period-custom-range input[type="date"] {
     font-size: 0.6rem !important;
     padding: 0.4rem !important;
+  }
+
+  /* --- STATS Summary Cards --- */
+  .stats-summary-cards {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .stats-summary-cards p {
+    font-size: 0.4rem !important;
+    margin-bottom: 4px !important;
+  }
+
+  .stats-summary-cards h2 {
+    font-size: 0.8rem !important;
+  }
+
+  .stats-summary-cards .pixel-border {
+    padding: 0.5rem 0.3rem !important;
   }
 }
