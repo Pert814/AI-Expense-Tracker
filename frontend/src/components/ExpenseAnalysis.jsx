@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useExpenses } from '../context/ExpenseContext';
+import EditExpenseModal from './EditExpenseModal';
 
 function ExpenseAnalysis({ userInfo }) {
     const { expenses, loading } = useExpenses();
@@ -8,8 +9,10 @@ function ExpenseAnalysis({ userInfo }) {
     const [periodMode, setPeriodMode] = useState('month');
     const [periodOffset, setPeriodOffset] = useState(0);
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
+    const [showTransactionsModal, setShowTransactionsModal] = useState(false);
+    const [selectedExpense, setSelectedExpense] = useState(null);
     
-    // Set date range for each mode from the date in userinfo.
+    // 定義期間(月、年、自訂)
     const periodRange = useMemo(() => {
         const today = new Date();
 
@@ -74,10 +77,12 @@ function ExpenseAnalysis({ userInfo }) {
 
     // 依照目前選擇的期間，篩選並計算統計資料
     const stats = useMemo(() => {
+        // 如果沒登入或是沒有支出資料，回傳預設值
         if (!periodRange || !Array.isArray(expenses)) {
-            return { total: '0', dailyAverage: '0', currency: userInfo?.currency || 'TWD', count: 0, categories: [], otherCurrencyTotals: [] };
+            return { total: '0', dailyAverage: '0', currency: userInfo?.currency || 'TWD', count: 0, transactions: [], categories: [], otherCurrencyTotals: [] };
         }
 
+        // 主要貨幣 = 使用者設定的貨幣，預設為TWD
         const mainCurrency = userInfo?.currency || 'TWD';
 
         // 先依日期範圍篩選
@@ -111,11 +116,13 @@ function ExpenseAnalysis({ userInfo }) {
             otherTotals[cur] = (otherTotals[cur] || 0) + (parseFloat(item.amount) || 0);
         });
 
+        // 回傳統計資料
         return {
             total: total.toFixed(2),
             dailyAverage: (total / daysInPeriod).toFixed(2),
             currency: mainCurrency,
             count: mainCurrencyData.length,
+            transactions: mainCurrencyData,
             categories: Object.entries(cats).sort((a, b) => b[1] - a[1]),
             otherCurrencyTotals: Object.entries(otherTotals).map(([currency, amount]) => ({
                 currency,
@@ -123,6 +130,47 @@ function ExpenseAnalysis({ userInfo }) {
             }))
         };
     }, [expenses, periodRange, userInfo?.currency]);
+
+    // 加總,計算支出百分比用
+    const categoryTotal = stats.categories.reduce((sum, [, amount]) => sum + Number(amount), 0);
+    
+    // 圓餅圖資料整理（大到小排序）
+    const chartData = stats.categories
+        .map(([name, value]) => ({ name, value: Number(value) || 0 }))
+        .sort((a, b) => b.value - a.value);
+
+    // 自訂圖例顯示
+    const renderLegend = ({ payload }) => {
+        const sortedPayload = [...(payload || [])].sort((a, b) => {
+            const amountA = Number(a.payload?.value) || 0;
+            const amountB = Number(b.payload?.value) || 0;
+            return amountB - amountA;
+        });
+
+        // 回傳圖例,百分比跟定義顏色
+        return (
+            <ul style={{ padding: 0, margin: 0, textAlign: 'center' }}>
+                {sortedPayload.map((entry) => {
+                    const amount = Number(entry.payload?.value) || 0;
+                    const percentage = categoryTotal ? (amount / categoryTotal) * 100 : 0;
+
+                    return (
+                        <li key={entry.value} style={{ display: 'inline-block', marginRight: '10px', whiteSpace: 'nowrap' }}>
+                            <span style={{
+                                display: 'inline-block',
+                                width: '10px',
+                                height: '10px',
+                                marginRight: '4px',
+                                backgroundColor: entry.color,
+                                verticalAlign: 'middle'
+                            }} />
+                            <span style={{ color: entry.color }}>{entry.value} {percentage.toFixed(1)}%</span>
+                        </li>
+                    );
+                })}
+            </ul>
+        );
+    };
     
     // 顯示loading 或是 還沒登入
     if ((loading && expenses.length === 0) || !userInfo) {
@@ -134,6 +182,7 @@ function ExpenseAnalysis({ userInfo }) {
         );
     }
 
+    // 版面配置
     return (
         <div className="view-stats">
             {/* 期間模式切換 */}
@@ -215,7 +264,16 @@ function ExpenseAnalysis({ userInfo }) {
                     <p style={{ fontSize: '0.5rem', marginBottom: '10px' }}>DAILY AVERAGE</p>
                     <h2 style={{ margin: 0, color: 'var(--pixel-primary)', fontSize: '1.2rem' }}>{Math.round(Number(stats.dailyAverage))} {stats.currency}</h2>
                 </div>
-                <div className="pixel-border" style={{ textAlign: 'center', background: 'white', borderBottom: '8px solid var(--pixel-success)' }}>
+                <div
+                    className="pixel-border"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setShowTransactionsModal(true)}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') setShowTransactionsModal(true);
+                    }}
+                    style={{ textAlign: 'center', background: 'white', borderBottom: '8px solid var(--pixel-success)', cursor: 'pointer' }}
+                >
                     <p style={{ fontSize: '0.5rem', marginBottom: '10px' }}>TRANSACTIONS</p>
                     <h2 style={{ margin: 0, color: 'var(--pixel-success)', fontSize: '1.2rem' }}>{stats.count}</h2>
                 </div>
@@ -244,14 +302,14 @@ function ExpenseAnalysis({ userInfo }) {
                     <ResponsiveContainer width="100%" height={320}>
                         <PieChart>
                             <Pie
-                                data={stats.categories.map(([cat, val]) => ({ name: cat, value: val }))}
+                                data={chartData}
                                 dataKey="value"
                                 nameKey="name"
                                 cx="50%"
                                 cy="45%"
                                 outerRadius={90}
                             >
-                                {stats.categories.map((_, index) => (
+                                {chartData.map((_, index) => (
                                     <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                                 ))}
                             </Pie>
@@ -260,11 +318,69 @@ function ExpenseAnalysis({ userInfo }) {
                                 layout="horizontal"
                                 verticalAlign="bottom"
                                 align="center"
+                                content={renderLegend}
                                 wrapperStyle={{ fontSize: '0.6rem', paddingTop: '10px' }}
                             />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
+            )}
+
+            {showTransactionsModal && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                    padding: '1rem'
+                }}>
+                    <div className="pixel-border" style={{ background: 'white', width: '100%', maxWidth: '800px', maxHeight: '85vh', overflowY: 'auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '0.8rem' }}>TRANSACTIONS: {periodRange?.label}</h3>
+                            <button className="pixel-button" onClick={() => setShowTransactionsModal(false)} style={{ fontSize: '0.6rem' }}>
+                                CLOSE
+                            </button>
+                        </div>
+                        <div className="pixel-table-wrapper">
+                            <table className="pixel-table">
+                                <thead>
+                                    <tr>
+                                        <th>DATE</th>
+                                        <th>ITEM</th>
+                                        <th>TYPE</th>
+                                        <th style={{ textAlign: 'right' }}>CASH</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {stats.transactions.map((expense, index) => (
+                                        <tr
+                                            key={expense.id || index}
+                                            onClick={() => setSelectedExpense(expense)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <td>{expense.date}</td>
+                                            <td>{expense.item}</td>
+                                            <td><span style={{ color: 'var(--pixel-primary)' }}>{expense.category || '-'}</span></td>
+                                            <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                                                {expense.amount}{expense.currency || stats.currency}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {selectedExpense && (
+                <EditExpenseModal
+                    expense={selectedExpense}
+                    onClose={() => setSelectedExpense(null)}
+                />
             )}
         </div>
     );

@@ -118,6 +118,7 @@ export const expenseCacheService = {
 
 // ===== 自訂幣別存入快取（跟訪客/登入身份無關，存在本機給下拉選單用）=====
 const CUSTOM_CURRENCIES_KEY = 'custom_currencies';
+export const DEFAULT_CURRENCIES = ['TWD', 'JPY', 'USD'];
 
 export const customCurrencyService = {
     // 讀取使用者自己新增過的幣別代碼清單，例如 ['AUD', 'SGD']
@@ -144,3 +145,7 @@ export const customCurrencyService = {
         return updated;
     },
 };
+
+export function getAvailableCurrencies() {
+    return [...new Set([...DEFAULT_CURRENCIES, ...customCurrencyService.getAll()])];
+}

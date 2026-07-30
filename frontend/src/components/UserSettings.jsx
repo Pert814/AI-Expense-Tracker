@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { userService } from '../services/api'; 
-import { guestUserService, customCurrencyService } from '../services/guestStorage';
+import { DEFAULT_CURRENCIES, getAvailableCurrencies, guestUserService, customCurrencyService } from '../services/guestStorage';
 
 function UserSettings({ onUpdateSuccess, user }) {
     const isGuest = !user;
     const [syncStatus, setSyncStatus] = useState('synced'); // synced | pending | offline | 'guest'
     const [customCurrencies, setCustomCurrencies] = useState(() => {
-        const saved = customCurrencyService.getAll();
-        const defaults = ['TWD', 'JPY', 'USD'];
-        return [...new Set([...defaults, ...saved])];
+        return getAvailableCurrencies();
     });
     const [customCurrencyValue, setCustomCurrencyValue] = useState('');
     const [userInfo, setUserInfo] = useState({ name: '', categories: [], currency: 'TWD' });
@@ -240,7 +238,7 @@ function UserSettings({ onUpdateSuccess, user }) {
                                 onClick={() => {
                                     if (!customCurrencyValue.trim()) return;
                                     const updated = customCurrencyService.add(customCurrencyValue);
-                                    const merged = [...new Set(['TWD', 'JPY', 'USD', ...updated])];
+                                    const merged = [...new Set([...DEFAULT_CURRENCIES, ...updated])];
                                     setCustomCurrencies(merged);
                                     setUserInfo(prev => ({ ...prev, currency: customCurrencyValue.trim().toUpperCase() }));
                                     setCustomCurrencyValue('');

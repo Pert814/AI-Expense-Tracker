@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';   
 import { expenseService } from '../services/api';
 import { useExpenses } from '../context/ExpenseContext';
+import { getAvailableCurrencies } from '../services/guestStorage';
 
 function ExpenseInput({ userInfo, user }) {
     const isGuest = !user;
@@ -11,9 +12,16 @@ function ExpenseInput({ userInfo, user }) {
     const [parsedData, setParsedData] = useState(null);
     const [error, setError] = useState(null);
     const [isListening, setIsListening] = useState(false);
+    // 取得所有使用者的常用貨幣
+    const currencyOptions = [...new Set([
+        ...getAvailableCurrencies(),
+        parsedData?.currency
+    ].filter(Boolean))];
 
+    // 定義語音輸入的 useRef 來存語音辨識物件
     const recognitionRef = useRef(null);
 
+    // 切換語音聆聽狀態的函式（目前是用繁體中文zh-TW)
     const toggleListening = () => {
         if (isListening) {
             if (recognitionRef.current) {
@@ -62,7 +70,7 @@ function ExpenseInput({ userInfo, user }) {
         }
     };
 
-    // Step 1: Parse the natural language text
+    // request backend parser(AI辨識)
     const handleParse = async (e) => {
         if (e) e.preventDefault();
         if (!text.trim() || isGuest) return;
@@ -84,7 +92,7 @@ function ExpenseInput({ userInfo, user }) {
         }
     };
 
-    // Step 2: Save the reviewed data to database
+    // 存入資料庫函式
     const handleSave = async () => {
         setSaving(true);
         setError(null);
@@ -101,12 +109,15 @@ function ExpenseInput({ userInfo, user }) {
         }
     };
 
+    // 修改field value函式 讓使用者可以再看一遍AI回傳是否正確
     const handleFieldChange = (field, value) => {
         setParsedData(prev => ({ ...prev, [field]: value }));
     };
 
+    // 定義AI能否使用狀態
     const isAiDisabled = loading || !text || isGuest;
 
+    // 版面配置
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto' }}>
             <div className="pixel-border">
@@ -235,12 +246,16 @@ function ExpenseInput({ userInfo, user }) {
                             </div>
                             <div>
                                 <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>CURRENCY</label>
-                                <input
+                                <select
                                     className="pixel-input"
                                     style={{ marginBottom: 0 }}
                                     value={parsedData.currency}
                                     onChange={(e) => handleFieldChange('currency', e.target.value)}
-                                />
+                                >
+                                    {currencyOptions.map(currency => (
+                                        <option key={currency} value={currency}>{currency}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div style={{ gridColumn: 'span 2' }}>
                                 <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>DATE</label>
