@@ -125,6 +125,7 @@ function DailyExpenses() {
                 ) : dailyExpenses.length === 0 ? (
                     <p style={{ color: 'var(--pixel-gray)', textAlign: 'center', padding: '20px', fontSize: '0.7rem' }}>NO RECORDS ON THIS DAY.</p>
                 ) : (
+                    <div className="pixel-table-wrapper">
                     <table className="pixel-table">
                         <thead>
                             <tr>
@@ -157,13 +158,14 @@ function DailyExpenses() {
                         </tbody>
                         <tfoot>
                             <tr style={{ fontWeight: 'bold' }}>
-                                <td colSpan="2" style={{ textAlign: 'right' }}>TOTAL:</td>
-                                <td style={{ textAlign: 'right' }}>
-                                    {dailyExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0).toFixed(2)}
+                                <td>TOTAL:</td>
+                                <td colSpan="2" style={{ textAlign: 'center' }}>
+                                    {dailyExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0).toFixed(0)}
                                 </td>
                             </tr>
                         </tfoot>
                     </table>
+                    </div>
                 )}
                 {dailyExpenses.length > 0 && (
                     <p style={{ fontSize: '0.55rem', color: 'var(--pixel-gray)', marginBottom: '15px' }}>

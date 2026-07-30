@@ -117,7 +117,10 @@ function AppContent({ user, setUser, authReady }) {
 
   // logout 函式
   const handleLogout = async () => {
-    //firebase 登出,前棉的unsubscribe會自動監聽到登出狀態並刪除localstorage中的user和token
+    // 確認提示窗
+    if (!window.confirm('ARE YOU SURE YOU WANT TO LOG OUT?')) return;
+
+    //firebase 登出,前述的unsubscribe會自動監聽到登出狀態並觸發移除localstorage中的user和token
     try {
         await signOut(auth);
     } catch (err) {

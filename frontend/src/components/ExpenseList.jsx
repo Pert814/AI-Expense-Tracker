@@ -37,7 +37,7 @@ function ExpenseList({ user }) {
             {expenses.length === 0 ? (
                 <p style={{ textAlign: 'center', color: 'var(--pixel-gray)', padding: '20px', fontSize: '0.7rem' }}>NO COINS SPENT YET.</p>
             ) : (
-                <div style={{ overflowX: 'auto' }}>
+                <div className="pixel-table-wrapper">
                     <table className="pixel-table">
                         <thead>
                             <tr>

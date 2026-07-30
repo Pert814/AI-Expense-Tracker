@@ -75,7 +75,7 @@ function ExpenseAnalysis({ userInfo }) {
     // 依照目前選擇的期間，篩選並計算統計資料
     const stats = useMemo(() => {
         if (!periodRange || !Array.isArray(expenses)) {
-            return { total: 0, count: 0, categories: [], otherCurrencyTotals: [] };
+            return { total: '0', dailyAverage: '0', currency: userInfo?.currency || 'TWD', count: 0, categories: [], otherCurrencyTotals: [] };
         }
 
         const mainCurrency = userInfo?.currency || 'TWD';
@@ -93,6 +93,10 @@ function ExpenseAnalysis({ userInfo }) {
 
         // 主幣別：總計
         const total = mainCurrencyData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        const averageEnd = new Date(Math.min(periodRange.end.getTime(), today.getTime()));
+        const daysInPeriod = Math.max(1, Math.ceil((averageEnd - periodRange.start) / (1000 * 60 * 60 * 24)));
 
         // 主幣別：分類統計
         const cats = {};
@@ -109,6 +113,7 @@ function ExpenseAnalysis({ userInfo }) {
 
         return {
             total: total.toFixed(2),
+            dailyAverage: (total / daysInPeriod).toFixed(2),
             currency: mainCurrency,
             count: mainCurrencyData.length,
             categories: Object.entries(cats).sort((a, b) => b[1] - a[1]),
@@ -204,11 +209,11 @@ function ExpenseAnalysis({ userInfo }) {
             <div className="stats-summary-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '2rem' }}>
                 <div className="pixel-border" style={{ textAlign: 'center', background: 'white', borderBottom: '8px solid var(--pixel-danger)' }}>
                     <p style={{ fontSize: '0.5rem', marginBottom: '10px' }}>TOTAL SPENT</p>
-                    <h2 style={{ margin: 0, color: 'var(--pixel-danger)', fontSize: '1.2rem' }}>{stats.total}</h2>
+                    <h2 style={{ margin: 0, color: 'var(--pixel-danger)', fontSize: '1.2rem' }}>{Math.round(Number(stats.total))} {stats.currency}</h2>
                 </div>
                 <div className="pixel-border" style={{ textAlign: 'center', background: 'white', borderBottom: '8px solid var(--pixel-primary)' }}>
-                    <p style={{ fontSize: '0.5rem', marginBottom: '10px' }}>MAIN CURRENCY</p>
-                    <h2 style={{ margin: 0, color: 'var(--pixel-primary)', fontSize: '1.2rem' }}>{stats.currency}</h2>
+                    <p style={{ fontSize: '0.5rem', marginBottom: '10px' }}>DAILY AVERAGE</p>
+                    <h2 style={{ margin: 0, color: 'var(--pixel-primary)', fontSize: '1.2rem' }}>{Math.round(Number(stats.dailyAverage))} {stats.currency}</h2>
                 </div>
                 <div className="pixel-border" style={{ textAlign: 'center', background: 'white', borderBottom: '8px solid var(--pixel-success)' }}>
                     <p style={{ fontSize: '0.5rem', marginBottom: '10px' }}>TRANSACTIONS</p>
