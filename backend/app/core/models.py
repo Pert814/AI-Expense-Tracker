@@ -1,6 +1,8 @@
+# pyrefly: ignore [missing-import]
 from pydantic import BaseModel
 from typing import Optional
 
+# 統一定義數據結構
 class ExpenseRecord(BaseModel):
     """
     Fixed schema for an expense record.

@@ -37,7 +37,7 @@ api.interceptors.request.use(
     }
 );
 
-// API methods
+// Call API methods 
 export const expenseService = {
     getAll: () => api.get('/expense'),
     create: (data) => api.post('/expense/create', data),

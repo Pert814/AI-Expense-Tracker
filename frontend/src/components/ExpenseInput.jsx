@@ -12,6 +12,7 @@ function ExpenseInput({ userInfo, user }) {
     const [parsedData, setParsedData] = useState(null);
     const [error, setError] = useState(null);
     const [isListening, setIsListening] = useState(false);
+
     // 取得所有使用者的常用貨幣
     const currencyOptions = [...new Set([
         ...getAvailableCurrencies(),
@@ -70,7 +71,7 @@ function ExpenseInput({ userInfo, user }) {
         }
     };
 
-    // request backend parser(AI辨識)
+    // 叫用後端AI辨識
     const handleParse = async (e) => {
         if (e) e.preventDefault();
         if (!text.trim() || isGuest) return;
