@@ -6,6 +6,7 @@ import ExpenseList from './components/ExpenseList'
 import DailyExpenses from './components/DailyExpenses'
 import UserSettings from './components/UserSettings'
 import ExpenseAnalysis from './components/ExpenseAnalysis'
+import Scan from './components/Scan'
 import { userService, expenseService } from './services/api'
 import { guestExpenseService } from './services/guestStorage';
 import LoadingScreen from './components/LoadingScreen'
@@ -266,6 +267,13 @@ function AppContent({ user, setUser, authReady }) {
             ENTRY
           </button>
           <button
+            className={`pixel-button ${currentView === 'scan' ? 'primary' : ''}`}
+            onClick={() => setCurrentView('scan')}
+            style={{ fontSize: '0.6rem' }}
+          >
+            SCAN
+          </button>
+          <button
               className={`pixel-button ${currentView === 'stats' ? 'primary' : ''}`}
               onClick={() => user ? setCurrentView('stats') : setShowLoginModal(true)}
               title={!user ? 'LOGIN REQUIRED' : undefined}
@@ -320,6 +328,16 @@ function AppContent({ user, setUser, authReady }) {
               <ExpenseList user={user} />
             </section>
           </div>
+
+        )}
+
+        {currentView === 'scan' && (
+            <div className="view-scan">
+                <h1 className="pixel-border" style={{ textAlign: 'center', background: 'var(--pixel-primary)', color: 'white', fontSize: '1rem' }}>
+                    SCAN RECEIPT
+                </h1>
+                <Scan user={user} />
+            </div>
         )}
 
         {currentView === 'stats' && (

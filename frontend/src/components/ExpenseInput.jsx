@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';   
 import { expenseService } from '../services/api';
 import { useExpenses } from '../context/ExpenseContext';
-import { getAvailableCurrencies } from '../services/guestStorage';
+import ExpenseReviewForm from './ExpenseReviewForm';
 
 function ExpenseInput({ userInfo, user }) {
     const isGuest = !user;
@@ -12,12 +12,6 @@ function ExpenseInput({ userInfo, user }) {
     const [parsedData, setParsedData] = useState(null);
     const [error, setError] = useState(null);
     const [isListening, setIsListening] = useState(false);
-
-    // 取得所有使用者的常用貨幣
-    const currencyOptions = [...new Set([
-        ...getAvailableCurrencies(),
-        parsedData?.currency
-    ].filter(Boolean))];
 
     // 定義語音輸入的 useRef 來存語音辨識物件
     const recognitionRef = useRef(null);
@@ -108,11 +102,6 @@ function ExpenseInput({ userInfo, user }) {
         } finally {
             setSaving(false);
         }
-    };
-
-    // 修改field value函式 讓使用者可以再看一遍AI回傳是否正確
-    const handleFieldChange = (field, value) => {
-        setParsedData(prev => ({ ...prev, [field]: value }));
     };
 
     // 定義AI能否使用狀態
@@ -211,83 +200,13 @@ function ExpenseInput({ userInfo, user }) {
                         </p>
                     </form>
                 ) : (
-                    <div style={{ animation: 'fadeIn 0.3s' }}>
-                        <h4 style={{ fontSize: '0.7rem', color: 'var(--pixel-secondary)', marginBottom: '15px' }}>
-                            PLEASE REVIEW AND CONFIRM:
-                        </h4>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' }}>
-                            <div>
-                                <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>ITEM</label>
-                                <input
-                                    className="pixel-input"
-                                    style={{ marginBottom: 0 }}
-                                    value={parsedData.item}
-                                    onChange={(e) => handleFieldChange('item', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>CATEGORY</label>
-                                <input
-                                    className="pixel-input"
-                                    style={{ marginBottom: 0 }}
-                                    value={parsedData.category}
-                                    onChange={(e) => handleFieldChange('category', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>AMOUNT</label>
-                                <input
-                                    className="pixel-input"
-                                    style={{ marginBottom: 0 }}
-                                    type="number"
-                                    value={parsedData.amount}
-                                    onChange={(e) => handleFieldChange('amount', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>CURRENCY</label>
-                                <select
-                                    className="pixel-input"
-                                    style={{ marginBottom: 0 }}
-                                    value={parsedData.currency}
-                                    onChange={(e) => handleFieldChange('currency', e.target.value)}
-                                >
-                                    {currencyOptions.map(currency => (
-                                        <option key={currency} value={currency}>{currency}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }}>
-                                <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>DATE</label>
-                                <input
-                                    className="pixel-input"
-                                    style={{ marginBottom: 0 }}
-                                    type="date"
-                                    value={parsedData.date}
-                                    onChange={(e) => handleFieldChange('date', e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button
-                                className="pixel-button"
-                                onClick={() => setParsedData(null)}
-                                style={{ flex: 1, margin: 0 }}
-                            >
-                                RE-EDIT
-                            </button>
-                            <button
-                                className="pixel-button success"
-                                onClick={handleSave}
-                                disabled={saving}
-                                style={{ flex: 2, margin: 0 }}
-                            >
-                                {saving ? 'SAVING...' : 'CONFIRM & SAVE'}
-                            </button>
-                        </div>
-                    </div>
+                    <ExpenseReviewForm
+                        expense={parsedData}
+                        onChange={setParsedData}
+                        onCancel={() => setParsedData(null)}
+                        onConfirm={handleSave}
+                        saving={saving}
+                    />
                 )}
 
                 {error && <p style={{ color: 'var(--pixel-danger)', marginTop: '15px', fontSize: '0.6rem', textAlign: 'center' }}>{error}</p>}
