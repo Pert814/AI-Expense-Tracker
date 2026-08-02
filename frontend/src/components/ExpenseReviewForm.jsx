@@ -71,6 +71,15 @@ function ExpenseReviewForm({ expense, onChange, onCancel, onConfirm, saving = fa
                         onChange={(event) => handleChange('date', event.target.value)}
                     />
                 </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>NOTE</label>
+                    <textarea
+                        className="pixel-input"
+                        style={{ marginBottom: 0, minHeight: '60px', resize: 'none' }}
+                        value={expense.note ?? ''}
+                        onChange={(event) => handleChange('note', event.target.value)}
+                    />
+                </div>
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>

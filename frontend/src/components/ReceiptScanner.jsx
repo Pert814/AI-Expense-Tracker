@@ -105,6 +105,19 @@ function ReceiptScanner({ onTextExtracted, onClose }){
                     />
                     <canvas ref={canvasRef} style={{ display: 'none' }} />
 
+                    {isScanning && (
+                        <p style={{
+                            fontSize: '0.55rem',
+                            color: 'white',
+                            textAlign: 'center',
+                            marginTop: '15px',
+                            padding: '0 1rem',
+                            lineHeight: 1.6
+                        }}>
+                            ⚠️ PLEASE HOLD STILL WHILE SCANNING...
+                        </p>
+                    )}
+
                     <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
                         <button
                             className="pixel-button"
