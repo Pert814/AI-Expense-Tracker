@@ -30,6 +30,14 @@ class UserUpdate(BaseModel):
 class ParseRequestModel(BaseModel):
     text: str
 
+# 改成陣列的形式 未來多筆資料擴充
+class ParsedExpenseList(BaseModel):
+    """
+    The AI parser always returns a list, even if the input describes only one expense.
+    This keeps the response format consistent regardless of how many items were detected.
+    """
+    expenses: list[ExpenseRecord]
+
 # GOOGLE_CLIENT_ID Token request model
 class TokenBody(BaseModel):
     id_token: str

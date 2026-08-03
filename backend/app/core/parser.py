@@ -3,7 +3,7 @@ from datetime import datetime
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from app.core.models import ExpenseRecord
+from app.core.models import ExpenseRecord, ParsedExpenseList
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,7 +28,9 @@ class GeminiParser:
         
         prompt = f"""
         Today's date is {today_date}.
+        The user input may describe ONE expense or MULTIPLE expenses in a single sentence.
         Extract the expense details: item, amount, date (YYYY-MM-DD), note, category and currency.
+        Always return a list, even if there is only one expense.
         The date calculated based on today's date {today_date}.
         For category, choose the one that best fits from this list: {categories_str}.
         For currency, if not specified, use {currency_to_use}.
@@ -41,12 +43,12 @@ class GeminiParser:
                 contents=prompt,
                 config={
                     'response_mime_type': 'application/json',
-                    'response_schema': ExpenseRecord,
+                    'response_schema': ParsedExpenseList,
                 }
             )
             result = response.parsed.model_dump()
             
-            return True, result
+            return True, result['expenses']
             
         except Exception as e:
             return False, f"New SDK Parsing Error: {str(e)}"
@@ -97,11 +99,7 @@ expense_parser = GeminiParser()
 # 以下為測試代碼
 if __name__ == "__main__":
     print(f"--- Starting New SDK Parser Test ({datetime.now().strftime('%Y-%m-%d')}) ---")
-    test_text = "Coffee for 150 dollars yesterday"
+    test_text = "Coffee for 150 dollars yesterday and 100 TWD today"
     success, result = expense_parser.parse_text(test_text)
-    
-    if success:
-        print("✅ Parsing Successful with New SDK:")
-        print(result)
-    else:
-        print(f"❌ Parsing Failed: {result}")
+    print(result)
+    ...

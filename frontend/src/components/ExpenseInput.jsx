@@ -9,7 +9,7 @@ function ExpenseInput({ userInfo, user }) {
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [parsedData, setParsedData] = useState(null);
+    const [parsedExpenses, setParsedExpenses] = useState(null);
     const [error, setError] = useState(null);
     const [isListening, setIsListening] = useState(false);
 
@@ -72,12 +72,13 @@ function ExpenseInput({ userInfo, user }) {
 
         setLoading(true);
         setError(null);
-        setParsedData(null);
+        setParsedExpenses(null);
 
         try {
             const response = await expenseService.parse(text);
             if (response.data.status === 'success') {
-                setParsedData(response.data.data);
+                const data = response.data.data;
+                setParsedExpenses(Array.isArray(data) ? data : [data]);
             }
         } catch (err) {
             console.error('Parsing error:', err);
@@ -93,8 +94,7 @@ function ExpenseInput({ userInfo, user }) {
         setError(null);
 
         try {
-            await addExpense(parsedData);
-            setParsedData(null);
+            await addExpense(parsedExpenses);
             setText('');
         } catch (err) {
             console.error('Saving error:', err);
@@ -113,7 +113,7 @@ function ExpenseInput({ userInfo, user }) {
             <div className="pixel-border">
                 <h3 style={{ marginBottom: '15px', fontSize: '0.9rem' }}>NEW TRANSACTION</h3>
 
-                {!parsedData ? (
+                {!parsedExpenses ? (
                     <form onSubmit={handleParse}>
                         <div style={{ position: 'relative' }}>
                             <textarea
@@ -201,9 +201,9 @@ function ExpenseInput({ userInfo, user }) {
                     </form>
                 ) : (
                     <ExpenseReviewForm
-                        expense={parsedData}
-                        onChange={setParsedData}
-                        onCancel={() => setParsedData(null)}
+                        expenses={parsedExpenses}
+                        onChange={setParsedExpenses}
+                        onCancel={() => setParsedExpenses(null)}
                         onConfirm={handleSave}
                         saving={saving}
                     />
@@ -213,18 +213,18 @@ function ExpenseInput({ userInfo, user }) {
             </div>
 
             {/* Manual Entry Button Below Border */}
-            {!parsedData && (
+            {!parsedExpenses && (
                 <div style={{ textAlign: 'center', marginTop: '15px' }}>
                     <button
                         type="button"
                         className="pixel-button"
-                        onClick={() => setParsedData({
+                        onClick={() => setParsedExpenses([{
                             item: '',
                             category: userInfo?.categories?.[0] || 'Food',
                             amount: '',
                             currency: userInfo?.currency || 'JPY',
                             date: new Date().toISOString().split('T')[0]
-                        })}
+                        }])}
                         style={{ width: '100%', margin: '0' }}
                     >
                         BYPASS AI: MANUAL ENTRY
