@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getAvailableCurrencies } from '../services/guestStorage';
 
 // 因為 ExpenseInput 跟 ExpenseScanner 都需要,故單獨拉出來做成元件
-function ExpenseReviewForm({ expenses, onChange, onCancel, onConfirm, saving = false, cancelLabel = 'RE-EDIT' }) {
+function ExpenseReviewForm({ expenses, onChange, onCancel, onConfirm, saving = false, cancelLabel = 'RE-EDIT', categories = [] }) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [touchStartX, setTouchStartX] = useState(null);
     const expense = expenses[currentIndex];
@@ -88,15 +88,24 @@ function ExpenseReviewForm({ expenses, onChange, onCancel, onConfirm, saving = f
                         value={expense.item ?? ''}
                         onChange={(event) => handleChange('item', event.target.value)}
                     />
-                </div>
+                </div>  
                 <div>
                     <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>CATEGORY</label>
-                    <input
+                    <select
                         className="pixel-input"
                         style={{ marginBottom: 0 }}
                         value={expense.category ?? ''}
                         onChange={(event) => handleChange('category', event.target.value)}
-                    />
+                    >
+                        {/* 防呆：如果目前的分類不在使用者的分類清單裡（例如舊資料、AI 判斷出清單外的分類），
+                            額外補一個選項讓它不會憑空消失，使用者還是看得到、能重新選擇 */}
+                        {expense.category && !categories.includes(expense.category) && (
+                            <option value={expense.category}>{expense.category}</option>
+                        )}
+                        {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
                 </div>
                 <div>
                     <label style={{ fontSize: '0.5rem', display: 'block', marginBottom: '5px' }}>AMOUNT</label>

@@ -95,6 +95,7 @@ function ExpenseInput({ userInfo, user }) {
 
         try {
             await addExpense(parsedExpenses);
+            setParsedExpenses(null);
             setText('');
         } catch (err) {
             console.error('Saving error:', err);
@@ -206,6 +207,7 @@ function ExpenseInput({ userInfo, user }) {
                         onCancel={() => setParsedExpenses(null)}
                         onConfirm={handleSave}
                         saving={saving}
+                        categories={userInfo?.categories || []}
                     />
                 )}
 

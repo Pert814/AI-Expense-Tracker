@@ -70,29 +70,60 @@ export function ExpenseProvider({ children, user, authReady }) {
         }
     }, [user?.id, isGuest, sortExpenses]);
 
-    // Add a new expense
-    const addExpense = useCallback(async (parsedData) => {
-        setError(null);
-        try {
-            if (isGuest) {
-                const newRecord = guestExpenseService.create(parsedData);
-                setExpenses(prev => sortExpenses([newRecord, ...prev]));
-                return newRecord;
-            } else {
-                const response = await expenseService.create(parsedData);
-                if (response.data.status === 'success') {
-                    const newRecord = response.data.data;
-                    // Background sync to ensure local state has complete server updates
-                    await fetchExpenses();
-                    return newRecord;
-                }
-            }
-        } catch (err) {
-            console.error('Error adding expense:', err);
-            throw err;
-        }
-    }, [isGuest, fetchExpenses, sortExpenses]);
+    // // Add a new expense
+    // const addExpense = useCallback(async (parsedData) => {
+    //     setError(null);
+    //     try {
+    //         if (isGuest) {
+    //             const newRecord = guestExpenseService.create(parsedData);
+    //             setExpenses(prev => sortExpenses([newRecord, ...prev]));
+    //             return newRecord;
+    //         } else {
+    //             const response = await expenseService.create(parsedData);
+    //             if (response.data.status === 'success') {
+    //                 const newRecord = response.data.data;
+    //                 // Background sync to ensure local state has complete server updates
+    //                 await fetchExpenses();
+    //                 return newRecord;
+    //             }
+    //         }
+    //     } catch (err) {
+    //         console.error('Error adding expense:', err);
+    //         throw err;
+    //     }
+    // }, [isGuest, fetchExpenses, sortExpenses]);
 
+    // Add one or more expenses at once
+    const addExpense = useCallback(async (parsedDataList) => {
+        setError(null);
+        // 再包一次, 防呆
+        const items = Array.isArray(parsedDataList) ? parsedDataList : [parsedDataList];
+        
+        try{
+            if (isGuest) {
+                // 訪客模式：逐筆存進本機，最後一次更新畫面
+                const newRecords = items.map(item => guestExpenseService.create(item));
+                setExpenses(prev => sortExpenses([...newRecords, ...prev]));
+                return newRecords;
+            }else{
+                // 登入模式：逐筆呼叫後端 API 建立紀錄
+                const newRecords = [];
+                for (const item of items) {
+                    const response = await expenseService.create(item);
+                    if (response.data.status === 'success') {
+                        newRecords.push(response.data.data);
+                    }
+                }
+                // After all successful creations, refresh the cloud data and cache
+                await fetchExpenses();
+                return newRecords;
+            }
+    }catch(err){
+        console.error('Error adding expense:', err);
+        throw err;     
+    }
+    }, [isGuest, fetchExpenses, sortExpenses]);
+    
     // Delete an expense
     const deleteExpense = useCallback(async (recordId) => {
         setError(null);
