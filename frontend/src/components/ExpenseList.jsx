@@ -12,7 +12,7 @@ function formatDateShort(dateStr) {
 }
 
 
-function ExpenseList({ user }) {
+function ExpenseList({ user , userInfo }) {
     const { expenses, loading, error, fetchExpenses } = useExpenses();
     const [selectedExpense, setSelectedExpense] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -77,6 +77,7 @@ function ExpenseList({ user }) {
             {showEditModal && selectedExpense && (
                 <EditExpenseModal
                     expense={selectedExpense}
+                    categories={userInfo?.categories || []}
                     onClose={() => {
                         setShowEditModal(false);
                         setSelectedExpense(null);

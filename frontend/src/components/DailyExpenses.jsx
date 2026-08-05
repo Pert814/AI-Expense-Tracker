@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import EditExpenseModal from './EditExpenseModal';
 import { useExpenses } from '../context/ExpenseContext';
 
-function DailyExpenses() {
+function DailyExpenses({ userInfo }) {
     const { expenses, loading } = useExpenses();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [viewDate, setViewDate] = useState(new Date());
@@ -177,6 +177,7 @@ function DailyExpenses() {
             {showEditModal && selectedExpense && (
                 <EditExpenseModal
                     expense={selectedExpense}
+                    categories={userInfo?.categories || []}
                     onClose={() => {
                         setShowEditModal(false);
                         setSelectedExpense(null);

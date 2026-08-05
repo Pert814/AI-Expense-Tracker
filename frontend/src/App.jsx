@@ -325,7 +325,7 @@ function AppContent({ user, setUser, authReady }) {
 
             <section>
               <h2 style={{ fontSize: '0.8rem', textAlign: 'center', color: 'var(--pixel-gray)', marginBottom: '1.5rem' }}>RECENT ACTIVITY</h2>
-              <ExpenseList user={user} />
+              <ExpenseList user={user} userInfo={userInfo} />
             </section>
           </div>
 
@@ -349,7 +349,7 @@ function AppContent({ user, setUser, authReady }) {
             <h1 className="pixel-border" style={{ textAlign: 'center', background: 'var(--pixel-success)', color: 'white', fontSize: '1rem' }}>
               HISTORY LOG
             </h1>
-            <DailyExpenses />
+            <DailyExpenses userInfo={userInfo}/>
           </div>
         )}
 

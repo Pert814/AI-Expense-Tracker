@@ -379,6 +379,7 @@ function ExpenseAnalysis({ userInfo }) {
             {selectedExpense && (
                 <EditExpenseModal
                     expense={selectedExpense}
+                    categories={userInfo?.categories || []}
                     onClose={() => setSelectedExpense(null)}
                 />
             )}

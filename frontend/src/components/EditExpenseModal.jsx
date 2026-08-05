@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useExpenses } from '../context/ExpenseContext';
 
-function EditExpenseModal({ expense, onClose }) {
+function EditExpenseModal({ expense, onClose, categories = [] }) {
     const { updateExpense, deleteExpense } = useExpenses();
     const [formData, setFormData] = useState({
         item: expense.item || '',
@@ -101,14 +101,20 @@ function EditExpenseModal({ expense, onClose }) {
                         </div>
                         <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.7rem' }}>TYPE</label>
-                            <input
+                            <select
                                 className="pixel-input"
-                                type="text"
                                 name="category"
                                 value={formData.category}
                                 onChange={handleChange}
                                 required
-                            />
+                            >
+                                {formData.category && !categories.includes(formData.category) && (
+                                    <option value={formData.category}>{formData.category}</option>
+                                )}
+                                {categories.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                     <div style={{ marginBottom: '15px' }}>
