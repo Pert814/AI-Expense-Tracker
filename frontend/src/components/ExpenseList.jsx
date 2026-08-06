@@ -41,7 +41,7 @@ function ExpenseList({ user , userInfo }) {
                     <table className="pixel-table">
                         <thead>
                             <tr>
-                                <th>DATE</th>
+                                <th style={{ fontSize: '0.6rem' }}>DATE</th>
                                 <th>ITEM</th>
                                 <th>TYPE</th>
                                 <th style={{ textAlign: 'right' }}>CASH</th>
@@ -57,7 +57,7 @@ function ExpenseList({ user , userInfo }) {
                                     }}
                                     style={{ cursor: 'pointer' }}
                                 >
-                                    <td>{formatDateShort(expense.date)}</td>
+                                    <td style={{ fontSize: '0.6rem', whiteSpace: 'nowrap' }}>{formatDateShort(expense.date)}</td>
                                     <td>{expense.item}</td>
                                     <td>
                                         <span style={{ color: 'var(--pixel-primary)' }}>

@@ -397,6 +397,14 @@ h4 {
     padding: 0.5rem;
   }
 
+  /* STATS Summary Cards：標籤文字固定高度，確保下方數字對齊 */
+  .stats-summary-cards p {
+    min-height: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   /* --- 日曆（DailyExpenses）--- */
   .calendar-day {
     padding: 6px 0 !important;

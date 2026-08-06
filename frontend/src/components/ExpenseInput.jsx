@@ -131,6 +131,7 @@ function ExpenseInput({ userInfo, user }) {
                                 className={`voice-button ${isListening ? 'listening' : ''}`}
                                 title={isListening ? 'Stop Listening' : 'Start Voice Input'}
                             >
+                                {/* 麥克風圖示 */}
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ imageRendering: 'pixelated' }}>
                                     {/* Mic Head */}
                                     <rect x="8" y="2" width="8" height="10" />
@@ -149,6 +150,35 @@ function ExpenseInput({ userInfo, user }) {
                                     <rect x="8" y="19" width="8" height="2" />
                                 </svg>
                             </button>
+                            {text && !isListening && (
+                                // 一鍵清除按鈕
+                                <button
+                                    type="button"
+                                    onClick={() => setText('')}
+                                    title="Clear Input"
+                                    style={{
+                                        position: 'absolute',
+                                        right: '10px',
+                                        bottom: '10px',
+                                        width: '28px',
+                                        height: '28px',
+                                        border: '3px solid var(--pixel-dark)',
+                                        background: 'white',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 'bold',
+                                        color: 'var(--pixel-danger)',
+                                        lineHeight: 1,
+                                        padding: 0
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            )}
                             {isListening && (
                                 <div className="listening-indicator" style={{ pointerEvents: 'auto' }}>
                                     <div>
