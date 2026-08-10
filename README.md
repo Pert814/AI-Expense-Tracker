@@ -42,17 +42,9 @@ A sophisticated, AI-enhanced expense management system that leverages Natural La
 
 ## 🏗️ Architecture
 
-```mermaid
-graph LR
-    User((User)) --> Frontend[React Frontend]
-    Frontend --> Auth[Google OAuth 2.0]
-    Frontend -- Bearer Token --> Backend[FastAPI Backend]
-    Backend -- Prompt --> Gemini[Google Gemini AI]
-    Backend -- CRUD --> Firestore[(Firebase Firestore)]
-    Backend -- Verify --> GoogleAuth[Google Token Verification]
-```
-
----
+<p align="center">
+  <img src="專案架構圖.png" alt="系統架構圖" width="700">
+</p>
 
 ## 🚀 Local Development
 
