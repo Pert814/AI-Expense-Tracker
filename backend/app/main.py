@@ -4,7 +4,7 @@ from typing import Optional
 import os
 from app.core.parser import expense_parser
 from app.core.database import db_client
-from app.core.models import ExpenseRecord, UserUpdate, ParseRequestModel, TokenBody
+from app.core.models import ChatRequestModel, ExpenseRecord, UserUpdate, ParseRequestModel, TokenBody
 import firebase_admin
 from firebase_admin import auth as firebase_auth
 from fastapi.middleware.cors import CORSMiddleware
@@ -163,6 +163,34 @@ async def read_expense_data(user_id: str = Depends(get_current_user_id)):
         "data": result
     }
 
+# 聊天端口 讓ai讀取紀錄和使用者問題並回應
+@app.post("/expense/chat")
+async def chat_about_expenses(request: ChatRequestModel, user_id: str = Depends(get_current_user_id)):
+    """Answer an expense question with the browser-managed conversation context."""
+    question = request.message.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="A question is required.")
+
+    user_success, user_info = db_client.get_user_info(user_id)
+    if not user_success:
+        raise HTTPException(status_code=404, detail=f"User not found: {user_id}")
+
+    expenses_success, expenses = db_client.read_user_record(user_id)
+    if not expenses_success:
+        raise HTTPException(status_code=500, detail=f"Database Error: {expenses}")
+
+    history = [message.model_dump() for message in request.history]
+    success, answer = expense_parser.answer_expense_question(
+        question=question,
+        history=history,
+        expenses=expenses,
+        user_info=user_info,
+    )
+    if not success:
+        raise HTTPException(status_code=500, detail=answer)
+
+    return {"status": "success", "answer": answer}
+
 # Update expense data from user 
 @app.put("/expense/{record_id}")
 async def update_expense_data(record_id: str, data: dict, user_id: str = Depends(get_current_user_id)):
@@ -229,5 +257,4 @@ async def update_user_info(body: UserUpdate, user_id: str = Depends(get_current_
 # 3. Spent 15 bucks on coffee this morning.
 # 4. Paid 200 dollars for car maintenance two days ago.
 # 5. Yesterday, I spent 100 dollars on a new phone.
-
 

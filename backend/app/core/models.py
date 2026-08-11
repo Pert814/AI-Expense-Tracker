@@ -1,6 +1,6 @@
 # pyrefly: ignore [missing-import]
 from pydantic import BaseModel
-from typing import Optional
+from typing import Literal, Optional
 
 # 統一定義數據結構
 class ExpenseRecord(BaseModel):
@@ -30,7 +30,19 @@ class UserUpdate(BaseModel):
 class ParseRequestModel(BaseModel):
     text: str
 
-# 改成陣列的形式 未來多筆資料擴充
+# 聊天相關模型
+class ChatMessage(BaseModel):
+    """A single completed chat turn kept by the browser."""
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class ChatRequestModel(BaseModel):
+    """The client sends its conversation history with each new question."""
+    message: str
+    history: list[ChatMessage] = []
+
+# 改成陣列的形式 以利同時多筆資料傳輸
 class ParsedExpenseList(BaseModel):
     """
     The AI parser always returns a list, even if the input describes only one expense.

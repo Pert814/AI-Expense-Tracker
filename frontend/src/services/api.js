@@ -44,6 +44,7 @@ export const expenseService = {
     update: (id, data) => api.put(`/expense/${id}`, data),
     delete: (id) => api.delete(`/expense/${id}`),
     parse: (text) => api.post('/parse_expense', { text }),
+    chat: (message, history) => api.post('/expense/chat', { message, history }),
 };
 
 export const authService = {

@@ -7,6 +7,7 @@ import DailyExpenses from './components/DailyExpenses'
 import UserSettings from './components/UserSettings'
 import ExpenseAnalysis from './components/ExpenseAnalysis'
 import Scan from './components/Scan'
+import ExpenseChat from './components/ExpenseChat'
 import { userService, expenseService } from './services/api'
 import { guestExpenseService } from './services/guestStorage';
 import LoadingScreen from './components/LoadingScreen'
@@ -65,7 +66,7 @@ function App() {
 function AppContent({ user, setUser, authReady }) {
   const [userInfo, setUserInfo] = useState(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [currentView, setCurrentView] = useState('home') // 'home', 'stats', 'daily', or 'settings'
+  const [currentView, setCurrentView] = useState('home') // 'home', 'scan', 'stats', 'daily', 'chat', or 'settings'
   const [isDataLoading, setIsDataLoading] = useState(false)
   const { fetchExpenses, expenses } = useExpenses()
 
@@ -290,6 +291,14 @@ function AppContent({ user, setUser, authReady }) {
               LOGS{!user && ' 🔒'}
           </button>
           <button
+              className={`pixel-button ${currentView === 'chat' ? 'primary' : ''}`}
+              onClick={() => user ? setCurrentView('chat') : setShowLoginModal(true)}
+              title={!user ? 'LOGIN REQUIRED' : undefined}
+              style={{ fontSize: '0.6rem', opacity: user ? 1 : 0.5 }}
+          >
+              CHAT{!user && ' 🔒'}
+          </button>
+          <button
               className={`pixel-button ${currentView === 'settings' ? 'primary' : ''}`}
               onClick={() => setCurrentView('settings')}
               style={{ fontSize: '0.6rem' }}
@@ -351,6 +360,10 @@ function AppContent({ user, setUser, authReady }) {
             </h1>
             <DailyExpenses userInfo={userInfo}/>
           </div>
+        )}
+
+        {currentView === 'chat' && user && (
+          <ExpenseChat user={user} />
         )}
 
         {currentView === 'settings' && (
