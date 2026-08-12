@@ -33,29 +33,8 @@ export default function ExpenseChat({ user }) {
 
   const sendMessage = async (event) => {
     event.preventDefault();
-    const question = message.trim();
-    if (!question || isSending) return;
-
-    setIsSending(true);
-    setError('');
-    try {
-      // Send the whole completed history, then add this new Q&A only after Gemini replies.
-      const response = await expenseService.chat(question, history);
-      const answer = response.data?.answer;
-      if (!answer) throw new Error('No answer was returned.');
-
-      setHistory((previous) => [
-        ...previous,
-        { role: 'user', content: question },
-        { role: 'assistant', content: answer },
-      ]);
-      setMessage('');
-    } catch (err) {
-      console.error('Expense chat failed:', err);
-      setError(err.response?.data?.detail || 'Unable to answer right now. Please try again.');
-    } finally {
-      setIsSending(false);
-    }
+    // Chat feature is temporarily disabled for maintenance.
+    return;
   };
 
   const clearHistory = () => {
@@ -103,21 +82,49 @@ export default function ExpenseChat({ user }) {
         </button>
       </div>
 
-      <form className="expense-chat-form" onSubmit={sendMessage}>
-        <label htmlFor="expense-chat-input">YOUR QUESTION</label>
+      <div 
+        className="pixel-border" 
+        style={{ 
+          borderColor: 'var(--pixel-warning)', 
+          background: '#fffdf0', 
+          marginBottom: '1.5rem', 
+          padding: '1rem',
+          textAlign: 'left'
+        }}
+      >
+        <p style={{ margin: 0, color: 'var(--pixel-dark)', fontWeight: 'bold', fontSize: '0.7rem' }}>
+          ⚠️ 系統公告 / SYSTEM NOTICE
+        </p>
+        <p style={{ margin: '0.5rem 0 0 0', color: 'var(--pixel-dark)', fontSize: '0.6rem', lineHeight: '1.6' }}>
+          對不起，AI 記帳助理功能目前正在維護中，暫時關閉輸入。
+          我們會盡快修復此功能，感謝您的耐心與體諒！
+          <br />
+          <span style={{ opacity: 0.8 }}>
+            Sorry, the AI chat assistant is currently undergoing maintenance. Text input is temporarily disabled. We will restore it as soon as possible!
+          </span>
+        </p>
+      </div>
+
+      <form className="expense-chat-form" onSubmit={(e) => e.preventDefault()}>
+        <label htmlFor="expense-chat-input" style={{ color: 'var(--pixel-gray)' }}>YOUR QUESTION (TEMPORARILY DISABLED)</label>
         <textarea
           id="expense-chat-input"
           className="pixel-input"
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          placeholder="例如：幫我看看最近的餐飲支出..."
+          value=""
+          readOnly
+          placeholder="功能維護中，暫時無法輸入... (Maintenance in progress...)"
           rows="3"
-          disabled={isSending}
+          disabled={true}
+          style={{ cursor: 'not-allowed', backgroundColor: '#f0f0f0', color: 'var(--pixel-gray)' }}
         />
-        {error && <p className="expense-chat-error">{error}</p>}
         <div className="expense-chat-submit">
-          <button className="pixel-button primary" type="submit" disabled={!message.trim() || isSending}>
-            {isSending ? 'THINKING...' : 'SEND'}
+          <button 
+            className="pixel-button primary" 
+            type="button" 
+            disabled={true} 
+            style={{ cursor: 'not-allowed', opacity: 0.6, background: 'var(--pixel-gray)' }}
+          >
+            MAINTENANCE
           </button>
         </div>
       </form>

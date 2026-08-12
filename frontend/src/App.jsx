@@ -296,7 +296,7 @@ function AppContent({ user, setUser, authReady }) {
               title={!user ? 'LOGIN REQUIRED' : undefined}
               style={{ fontSize: '0.6rem', opacity: user ? 1 : 0.5 }}
           >
-              CHAT{!user && ' 🔒'}
+              CHAT 🛠️{!user && ' 🔒'}
           </button>
           <button
               className={`pixel-button ${currentView === 'settings' ? 'primary' : ''}`}
