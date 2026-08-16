@@ -4,10 +4,12 @@ from typing import Optional
 import os
 from app.core.parser import expense_parser
 from app.core.database import db_client
-from app.core.models import ChatRequestModel, ExpenseRecord, UserUpdate, ParseRequestModel, TokenBody
+from app.core.models import ChatRequestModel, ExpenseRecord, UserUpdate, ParseRequestModel, TokenBody, WeeklyReportRequest 
+from app.core.reports import build_weekly_report
 import firebase_admin
 from firebase_admin import auth as firebase_auth
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import date as Date
 
 
 # Initialize FastAPI application
@@ -29,7 +31,7 @@ app.add_middleware(
 # read GOOGLE_CLIENT_ID from .env
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
-# use fire
+# get firebase user id from firebase token
 async def get_current_user_id(authorization: str = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
@@ -88,7 +90,7 @@ async def parse_expense(request: ParseRequestModel, user_id: str = Depends(get_c
     }
 
 # Parse expense from image with gemini AI to get structured data
-# 這個API 可能用不到...
+# 這個API 目前還用不到...
 @app.post("/parse_expense_image")
 async def parse_expense_image(
     file: UploadFile = File(...), 
@@ -147,7 +149,7 @@ async def create_expense_data(request: ExpenseRecord, user_id: str = Depends(get
         "db_id": db_result   
     }
 
-# Read expense from user
+# Read expense from database
 @app.get("/expense")
 async def read_expense_data(user_id: str = Depends(get_current_user_id)):
     print(f"[DEBUG] Received request for user_id: {user_id}")
@@ -162,34 +164,6 @@ async def read_expense_data(user_id: str = Depends(get_current_user_id)):
         "status": "success",
         "data": result
     }
-
-# 聊天端口 讓ai讀取紀錄和使用者問題並回應
-@app.post("/expense/chat")
-async def chat_about_expenses(request: ChatRequestModel, user_id: str = Depends(get_current_user_id)):
-    """Answer an expense question with the browser-managed conversation context."""
-    question = request.message.strip()
-    if not question:
-        raise HTTPException(status_code=400, detail="A question is required.")
-
-    user_success, user_info = db_client.get_user_info(user_id)
-    if not user_success:
-        raise HTTPException(status_code=404, detail=f"User not found: {user_id}")
-
-    expenses_success, expenses = db_client.read_user_record(user_id)
-    if not expenses_success:
-        raise HTTPException(status_code=500, detail=f"Database Error: {expenses}")
-
-    history = [message.model_dump() for message in request.history]
-    success, answer = expense_parser.answer_expense_question(
-        question=question,
-        history=history,
-        expenses=expenses,
-        user_info=user_info,
-    )
-    if not success:
-        raise HTTPException(status_code=500, detail=answer)
-
-    return {"status": "success", "answer": answer}
 
 # Update expense data from user 
 @app.put("/expense/{record_id}")
@@ -248,6 +222,86 @@ async def update_user_info(body: UserUpdate, user_id: str = Depends(get_current_
     return {
         "status": "success",
         "message": "User information updated successfully"
+    }
+
+# 聊天端口 讓ai讀取紀錄和使用者問題並回應
+@app.post("/expense/chat")
+async def chat_about_expenses(request: ChatRequestModel, user_id: str = Depends(get_current_user_id)):
+    """Answer an expense question with the browser-managed conversation context."""
+    question = request.message.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="A question is required.")
+
+    user_success, user_info = db_client.get_user_info(user_id)
+    if not user_success:
+        raise HTTPException(status_code=404, detail=f"User not found: {user_id}")
+
+    expenses_success, expenses = db_client.read_user_record(user_id)
+    if not expenses_success:
+        raise HTTPException(status_code=500, detail=f"Database Error: {expenses}")
+
+    history = [message.model_dump() for message in request.history]
+    success, answer = expense_parser.answer_expense_question(
+        question=question,
+        history=history,
+        expenses=expenses,
+        user_info=user_info,
+    )
+    if not success:
+        raise HTTPException(status_code=500, detail=answer)
+
+    return {"status": "success", "answer": answer}
+
+# Generate and save weekly report
+@app.post("/report/weekly/generate")
+async def generate_and_save_weekly_report(
+    request: WeeklyReportRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    try:
+        reference_date = (
+            Date.fromisoformat(request.date)
+            if request.date
+            else Date.today()
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="date must use YYYY-MM-DD format.",
+        )
+    user_success, user_info = db_client.get_user_info(user_id)
+    if not user_success:
+        raise HTTPException(
+            status_code=404,
+            detail=f"User not found: {user_id}",
+        )
+    expenses_success, expenses = db_client.read_user_record(user_id)
+    if not expenses_success:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database Error: {expenses}",
+        )
+    primary_currency = user_info.get("currency") or "USD"
+    report = build_weekly_report(
+        expenses=expenses,
+        reference_date=reference_date,
+        primary_currency=primary_currency,
+    )
+    save_success, result = db_client.save_weekly_report(
+        user_id=user_id,
+        report=report,
+        recipient_email=user_info.get("email"),
+    )
+    if not save_success:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database Error: {result}",
+        )
+
+    return {
+        "status": "success",
+        "message": "Weekly report generated and saved.",
+        "data": report,
     }
 
 

@@ -30,25 +30,27 @@ class UserUpdate(BaseModel):
 class ParseRequestModel(BaseModel):
     text: str
 
-# 聊天相關模型
-class ChatMessage(BaseModel):
-    """A single completed chat turn kept by the browser."""
-    role: Literal["user", "assistant"]
-    content: str
-
-
-class ChatRequestModel(BaseModel):
-    """The client sends its conversation history with each new question."""
-    message: str
-    history: list[ChatMessage] = []
-
-# 改成陣列的形式 以利同時多筆資料傳輸
+# Parse expense request model改成陣列的形式 以利同時多筆資料傳輸
 class ParsedExpenseList(BaseModel):
     """
     The AI parser always returns a list, even if the input describes only one expense.
     This keeps the response format consistent regardless of how many items were detected.
     """
     expenses: list[ExpenseRecord]
+# 聊天相關模型
+class ChatMessage(BaseModel):
+    """A single completed chat turn kept by the browser."""
+    role: Literal["user", "assistant"]
+    content: str
+class ChatRequestModel(BaseModel):
+    """The client sends its conversation history with each new question."""
+    message: str
+    history: list[ChatMessage] = []
+
+# weekly report model
+class WeeklyReportRequest(BaseModel):
+    date: Optional[str] = None
+    
 
 # GOOGLE_CLIENT_ID Token request model
 class TokenBody(BaseModel):

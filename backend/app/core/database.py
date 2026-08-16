@@ -26,7 +26,6 @@ class Database:
 
         self.db = firestore.client()
 
-    
     # Check if user exists, if not create user document with default fields.
     # Automatically migrates legacy user data (Google sub ID) to the new Firebase UID.
     def check_user_exists(self, user_id, email, name):
@@ -155,6 +154,7 @@ class Database:
             return True, records
         except Exception as e:
             return False, str(e)
+    
     # method to update user record
     def update_user_record(self, user_id, record_id, data):
         try:
@@ -163,6 +163,7 @@ class Database:
             return True, "Record updated successfully"
         except Exception as e:
             return False, str(e)
+    
     # method to delete user record
     def delete_user_record(self, user_id, record_id):
         try:
@@ -193,23 +194,45 @@ class Database:
             return True, "User info updated successfully"
         except Exception as e:
             return False, str(e)
+
+    # method to add weekly report
+    def save_weekly_report(self, user_id, report, recipient_email):
+        try:
+            week_start = report["week_start"]
+            report_to_save = {
+                **report, # 解包字典並加入
+                "email_log": recipient_email,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            }
+
+            # 存檔路徑：users/{user_id}/weekly_reports/{week_start}
+            report_ref = (
+                self.db.collection("users")
+                .document(user_id)
+                .collection("weekly_reports")
+                .document(week_start)
+            )
             
+            report_ref.set(report_to_save, merge=True)
+            return True, week_start
+        except Exception as e:
+            return False, str(e)
 
 db_client = Database()
 
-# 以下為測試代碼
-if __name__ == "__main__":
-    print("\n--- Starting Database Connection Test ---")
-    test_data = {
-        "item": "Test Coffee",
-        "amount": 150,
-        "date": "2026-01-19",
-        "note": "Unit test record"
-    }
-    success, result = db_client.add_record("database_test", test_data)
+# # 以下為測試代碼（很久以前了...)
+# if __name__ == "__main__":
+#     print("\n--- Starting Database Connection Test ---")
+#     test_data = {
+#         "item": "Test Coffee",
+#         "amount": 150,
+#         "date": "2026-01-19",
+#         "note": "Unit test record"
+#     }
+#     success, result = db_client.add_record("database_test", test_data)
     
-    if success:
-        print(f"🎉 Success! Document ID: {result}")
-    else:
-        print(f"💀 Failed! Error: {result}")
+#     if success:
+#         print(f"🎉 Success! Document ID: {result}")
+#     else:
+#         print(f"💀 Failed! Error: {result}")
 
