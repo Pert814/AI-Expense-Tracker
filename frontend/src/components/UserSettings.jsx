@@ -141,7 +141,8 @@ function UserSettings({ onUpdateSuccess, user }) {
         try {
             const response = await reportService.generateWeekly(userInfo.weekly_report_email.trim());
             if (response.data.status === 'success') {
-                setReportMessage({ type: 'success', text: 'REPORT GENERATED AND SAVED!' });
+                const successMsg = response.data.message || 'REPORT GENERATED AND SENT!';
+                setReportMessage({ type: 'success', text: successMsg.toUpperCase() });
             } else {
                 setReportMessage({ type: 'error', text: response.data.message || 'FAILED TO GENERATE REPORT.' });
             }
