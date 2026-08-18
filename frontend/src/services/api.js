@@ -56,4 +56,8 @@ export const userService = {
     update: (data) => api.put('/user_data', data),
 };
 
+export const reportService = {
+    generateWeekly: (recipientEmail) => api.post('/report/weekly/generate', { recipient_email: recipientEmail }),
+};
+
 export default api;

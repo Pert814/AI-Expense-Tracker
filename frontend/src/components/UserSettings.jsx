@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { userService } from '../services/api'; 
+import { userService, reportService } from '../services/api'; 
 import { DEFAULT_CURRENCIES, getAvailableCurrencies, guestUserService, customCurrencyService } from '../services/guestStorage';
 
 function UserSettings({ onUpdateSuccess, user }) {
@@ -14,6 +14,8 @@ function UserSettings({ onUpdateSuccess, user }) {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [sendingReport, setSendingReport] = useState(false);
+    const [reportMessage, setReportMessage] = useState({ type: '', text: '' });
 
     useEffect(() => {
         fetchUserInfo();
@@ -30,15 +32,22 @@ function UserSettings({ onUpdateSuccess, user }) {
         try {
             const response = await userService.getInfo();
             if (response.data.status === 'success') {
-                setUserInfo(response.data.data);
+                const data = response.data.data;
+                if (!data.weekly_report_email) {
+                    data.weekly_report_email = data.email || user?.email || '';
+                }
+                setUserInfo(data);
                 // 拿到雲端最新設定，順便備份一份到本機（isPending = false，代表這份跟雲端一致）
-                guestUserService.update(response.data.data, false);
+                guestUserService.update(data, false);
                 setSyncStatus('synced');
             }
         } catch (err) {
             console.error('Failed to fetch user info, falling back to local cache:', err);
             // 打不到後端（離線），退回讀本機備份
             const cached = guestUserService.getInfo();
+            if (cached && !cached.weekly_report_email) {
+                cached.weekly_report_email = cached.email || user?.email || '';
+            }
             setUserInfo(cached);
             setSyncStatus('offline');
             setMessage({ type: 'error', text: 'OFFLINE: SHOWING LOCALLY CACHED SETTINGS.' });
@@ -56,7 +65,8 @@ function UserSettings({ onUpdateSuccess, user }) {
             name: userInfo.name,
             categories: userInfo.categories,
             currency: userInfo.currency,
-            stats_start_date: userInfo.stats_start_date
+            stats_start_date: userInfo.stats_start_date,
+            weekly_report_email: userInfo.weekly_report_email
         };
 
         if (isGuest) {
@@ -102,7 +112,8 @@ function UserSettings({ onUpdateSuccess, user }) {
                 name: localData.name,
                 categories: localData.categories,
                 currency: localData.currency,
-                stats_start_date: localData.stats_start_date
+                stats_start_date: localData.stats_start_date,
+                weekly_report_email: localData.weekly_report_email
             });
 
             if (response.data.status === 'success') {
@@ -115,6 +126,31 @@ function UserSettings({ onUpdateSuccess, user }) {
             setMessage({ type: 'error', text: 'SYNC FAILED. STILL OFFLINE?' });
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSendReport = async () => {
+        if (!userInfo.weekly_report_email || !userInfo.weekly_report_email.trim()) {
+            setReportMessage({ type: 'error', text: 'PLEASE PROVIDE A VALID EMAIL.' });
+            return;
+        }
+
+        setSendingReport(true);
+        setReportMessage({ type: '', text: '' });
+
+        try {
+            const response = await reportService.generateWeekly(userInfo.weekly_report_email.trim());
+            if (response.data.status === 'success') {
+                setReportMessage({ type: 'success', text: 'REPORT GENERATED AND SAVED!' });
+            } else {
+                setReportMessage({ type: 'error', text: response.data.message || 'FAILED TO GENERATE REPORT.' });
+            }
+        } catch (err) {
+            console.error('Failed to generate weekly report:', err);
+            const errMsg = err.response?.data?.detail || 'FAILED TO SEND REPORT. SYSTEM ERROR.';
+            setReportMessage({ type: 'error', text: errMsg.toUpperCase() });
+        } finally {
+            setSendingReport(false);
         }
     };
 
@@ -309,6 +345,60 @@ function UserSettings({ onUpdateSuccess, user }) {
                         ))}
                     </div>
                 </div>
+
+                {/* WEEKLY REPORT CONFIG */}
+                {!isGuest ? (
+                    <div className="pixel-border" style={{ marginTop: '20px', marginBottom: '20px', borderStyle: 'dashed', borderColor: 'var(--pixel-primary)' }}>
+                        <h3 style={{ fontSize: '0.8rem', marginBottom: '10px', color: 'var(--pixel-primary)' }}>WEEKLY REPORT</h3>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <label style={{ display: 'block', fontSize: '0.7rem' }}>RECIPIENT EMAIL</label>
+                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                <input
+                                    className="pixel-input"
+                                    type="email"
+                                    placeholder="E.G. USER@EXAMPLE.COM"
+                                    value={userInfo.weekly_report_email || ''}
+                                    onChange={(e) => setUserInfo({ ...userInfo, weekly_report_email: e.target.value })}
+                                    disabled={saving || sendingReport}
+                                    style={{ flex: 1, marginBottom: 0, minWidth: '200px' }}
+                                />
+                                <button
+                                    type="button"
+                                    className="pixel-button warning"
+                                    onClick={handleSendReport}
+                                    disabled={saving || sendingReport || !userInfo.weekly_report_email}
+                                    style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                >
+                                    {sendingReport ? (
+                                        <>
+                                            <div className="pixel-loader" style={{ width: '12px', height: '12px', border: '2px solid black' }}></div>
+                                            SENDING...
+                                        </>
+                                    ) : 'SEND REPORT'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {reportMessage.text && (
+                            <div style={{
+                                marginTop: '10px',
+                                fontSize: '0.6rem',
+                                color: reportMessage.type === 'success' ? 'var(--pixel-success)' : 'var(--pixel-danger)',
+                                fontWeight: 'bold'
+                            }}>
+                                {reportMessage.text}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="pixel-border" style={{ marginTop: '20px', marginBottom: '20px', borderStyle: 'dashed', background: '#f8f9fa', borderColor: 'var(--pixel-gray)' }}>
+                        <h3 style={{ fontSize: '0.8rem', marginBottom: '10px', color: 'var(--pixel-gray)' }}>WEEKLY REPORT CONFIG</h3>
+                        <p style={{ fontSize: '0.6rem', color: 'var(--pixel-gray)', margin: 0 }}>
+                            CLOUD FEATURES REQUIRE LOGIN. PLEASE SIGN IN TO ENABLE WEEKLY REPORTS.
+                        </p>
+                    </div>
+                )}
 
                 <button
                     className="pixel-button primary"

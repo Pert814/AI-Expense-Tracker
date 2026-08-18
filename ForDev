@@ -12,6 +12,18 @@ Frontend :
     其他檔案要用 Firebase 的任何功能,都要從這裡拿。
     /frontend/src/firebase.js
 
+    地端測試:
+    前端: 
+        cd .. 
+        cd '/Users/kanyuken/Documents/GitHub/AI-Expense-Tracker/frontend'
+        npm run dev
+    後端: 
+        cd '/Users/kanyuken/Documents/GitHub/AI-Expense-Tracker/backend'
+        source venv/bin/activate      
+        uvicorn app.main:app --reload
+
+
+
 Backend : 
     database.py ： 負責連結firebase資料庫,初始化firebase_admin及定義其資料庫操作
     /backend/database.py
