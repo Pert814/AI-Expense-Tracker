@@ -17,6 +17,10 @@ Frontend :
         cd .. 
         cd '/Users/kanyuken/Documents/GitHub/AI-Expense-Tracker/frontend'
         npm run dev
+    部署firebase:
+        npm run build
+        firebase deploy --only hosting
+
     後端: 
         cd '/Users/kanyuken/Documents/GitHub/AI-Expense-Tracker/backend'
         source venv/bin/activate      

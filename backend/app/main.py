@@ -6,6 +6,7 @@ from app.core.parser import expense_parser
 from app.core.database import db_client
 from app.core.models import ChatRequestModel, ExpenseRecord, UserUpdate, ParseRequestModel, TokenBody, WeeklyReportRequest 
 from app.core.reports import build_weekly_report
+from app.core.email import send_weekly_report_email
 import firebase_admin
 from firebase_admin import auth as firebase_auth
 from fastapi.middleware.cors import CORSMiddleware
@@ -287,10 +288,11 @@ async def generate_and_save_weekly_report(
         reference_date=reference_date,
         primary_currency=primary_currency,
     )
+    recipient_email = request.recipient_email or user_info.get("email")
     save_success, result = db_client.save_weekly_report(
         user_id=user_id,
         report=report,
-        recipient_email=request.recipient_email or user_info.get("email"),
+        recipient_email=recipient_email,
     )
     if not save_success:
         raise HTTPException(
@@ -298,9 +300,18 @@ async def generate_and_save_weekly_report(
             detail=f"Database Error: {result}",
         )
 
+    # Send weekly report email
+    email_success, email_msg = send_weekly_report_email(recipient_email, report)
+    if not email_success:
+        return {
+            "status": "success",
+            "message": f"Weekly report generated and saved, but failed to send email: {email_msg}",
+            "data": report,
+        }
+
     return {
         "status": "success",
-        "message": "Weekly report generated and saved.",
+        "message": "Weekly report generated and saved. Email sent successfully!",
         "data": report,
     }
 
