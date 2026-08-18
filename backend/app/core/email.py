@@ -1,8 +1,11 @@
 import os
 import smtplib
+import email.utils
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
+
 
 # Ensure environment variables are loaded
 load_dotenv()
@@ -11,16 +14,18 @@ load_dotenv()
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-SMTP_FROM = os.getenv("SMTP_FROM")
+SMTP_FROM_ENV = os.getenv("SMTP_FROM") or SMTP_USERNAME
+
+# 解析 sender 地址
+parsed_name, parsed_addr = email.utils.parseaddr(SMTP_FROM_ENV)
+SMTP_SENDER_ADDR = parsed_addr if parsed_addr else SMTP_USERNAME
+SMTP_DISPLAY_FROM = SMTP_FROM_ENV
 
 # 開端口在587
 try:
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 except ValueError:
     SMTP_PORT = 587
-
-# Fallback sender address to username if not specified
-SMTP_FROM = SMTP_FROM or SMTP_USERNAME
 
 
 def send_weekly_report_email(recipient_email: str, report: dict) -> tuple[bool, str]:
@@ -182,7 +187,7 @@ def send_weekly_report_email(recipient_email: str, report: dict) -> tuple[bool, 
         # Setup MIME email
         msg = MIMEMultipart("alternative")
         msg["Subject"] = f"[AI Expense Tracker] Weekly Report ({week_start} ~ {week_end})"
-        msg["From"] = SMTP_FROM
+        msg["From"] = SMTP_DISPLAY_FROM
         msg["To"] = recipient_email
 
         # Plain text fallback for simple clients
@@ -207,7 +212,7 @@ def send_weekly_report_email(recipient_email: str, report: dict) -> tuple[bool, 
 
         # Login and send
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
-        server.sendmail(SMTP_FROM, [recipient_email], msg.as_string())
+        server.sendmail(SMTP_SENDER_ADDR, [recipient_email], msg.as_string())
         server.quit()
 
         return True, "Email sent successfully!"
