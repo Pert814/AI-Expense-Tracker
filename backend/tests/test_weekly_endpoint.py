@@ -33,3 +33,7 @@ def test_generate_report():
 
 if __name__ == "__main__":
     test_generate_report()
+
+# cd backend
+# source venv/bin/activate      
+# PYTHONPATH=. python3 tests/test_weekly_endpoint.py

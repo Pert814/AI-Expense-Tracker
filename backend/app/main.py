@@ -290,7 +290,7 @@ async def generate_and_save_weekly_report(
     save_success, result = db_client.save_weekly_report(
         user_id=user_id,
         report=report,
-        recipient_email=user_info.get("email"),
+        recipient_email=request.recipient_email or user_info.get("email"),
     )
     if not save_success:
         raise HTTPException(

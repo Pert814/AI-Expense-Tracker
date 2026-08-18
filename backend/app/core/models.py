@@ -37,6 +37,7 @@ class ParsedExpenseList(BaseModel):
     This keeps the response format consistent regardless of how many items were detected.
     """
     expenses: list[ExpenseRecord]
+
 # 聊天相關模型
 class ChatMessage(BaseModel):
     """A single completed chat turn kept by the browser."""
@@ -50,7 +51,7 @@ class ChatRequestModel(BaseModel):
 # weekly report model
 class WeeklyReportRequest(BaseModel):
     date: Optional[str] = None
-    
+    recipient_email: Optional[str] = None
 
 # GOOGLE_CLIENT_ID Token request model
 class TokenBody(BaseModel):
