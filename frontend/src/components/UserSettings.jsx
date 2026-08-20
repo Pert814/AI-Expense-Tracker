@@ -16,11 +16,13 @@ function UserSettings({ onUpdateSuccess, user }) {
     const [message, setMessage] = useState({ type: '', text: '' });
     const [sendingReport, setSendingReport] = useState(false);
     const [reportMessage, setReportMessage] = useState({ type: '', text: '' });
+    const [initialSubscribed, setInitialSubscribed] = useState(false);
 
     useEffect(() => {
         fetchUserInfo();
     }, [user]);
 
+    // 從雲端抓取使用者設定函式
     const fetchUserInfo = async () => {
         if (isGuest) {
             setUserInfo(guestUserService.getInfo());
@@ -36,17 +38,26 @@ function UserSettings({ onUpdateSuccess, user }) {
                 if (!data.weekly_report_email) {
                     data.weekly_report_email = data.email || user?.email || '';
                 }
+                if (typeof data.weekly_report_subscribed !== 'boolean') {
+                    data.weekly_report_subscribed = false;
+                }
                 setUserInfo(data);
-                // 拿到雲端最新設定，順便備份一份到本機（isPending = false，代表這份跟雲端一致）
-                guestUserService.update(data, false);
+                setInitialSubscribed(isSub);
+                guestUserService.update(data, false);// 拿到雲端最新設定，
+                // 順便備份一份到本機（isPending = false，代表這份跟雲端一致）
                 setSyncStatus('synced');
             }
         } catch (err) {
             console.error('Failed to fetch user info, falling back to local cache:', err);
             // 打不到後端（離線），退回讀本機備份
             const cached = guestUserService.getInfo();
+            const isSub = typeof cached?.weekly_report_subscribed === 'boolean' ? cached.weekly_report_subscribed : false;
+            setInitialSubscribed(isSub);
             if (cached && !cached.weekly_report_email) {
                 cached.weekly_report_email = cached.email || user?.email || '';
+            }
+            if (cached && typeof cached.weekly_report_subscribed !== 'boolean') {
+                cached.weekly_report_subscribed = false;
             }
             setUserInfo(cached);
             setSyncStatus('offline');
@@ -55,7 +66,8 @@ function UserSettings({ onUpdateSuccess, user }) {
             setLoading(false);
         }
     };      
-
+    
+    // 更新使用者資料函式 把更新後的狀態丟進payload裡面 去更新資料庫或本地端
     const handleUpdateInfo = async (e) => {
         e.preventDefault();
         setSaving(true);
@@ -66,7 +78,8 @@ function UserSettings({ onUpdateSuccess, user }) {
             categories: userInfo.categories,
             currency: userInfo.currency,
             stats_start_date: userInfo.stats_start_date,
-            weekly_report_email: userInfo.weekly_report_email
+            weekly_report_email: userInfo.weekly_report_email,
+            weekly_report_subscribed: userInfo.weekly_report_subscribed
         };
 
         if (isGuest) {
@@ -113,7 +126,8 @@ function UserSettings({ onUpdateSuccess, user }) {
                 categories: localData.categories,
                 currency: localData.currency,
                 stats_start_date: localData.stats_start_date,
-                weekly_report_email: localData.weekly_report_email
+                weekly_report_email: localData.weekly_report_email,
+                weekly_report_subscribed: localData.weekly_report_subscribed
             });
 
             if (response.data.status === 'success') {
@@ -346,7 +360,6 @@ function UserSettings({ onUpdateSuccess, user }) {
                         ))}
                     </div>
                 </div>
-
                 {/* WEEKLY REPORT CONFIG */}
                 {!isGuest ? (
                     <div className="pixel-border" style={{ marginTop: '20px', marginBottom: '20px', borderStyle: 'dashed', borderColor: 'var(--pixel-primary)' }}>
@@ -378,6 +391,35 @@ function UserSettings({ onUpdateSuccess, user }) {
                                         </>
                                     ) : 'SEND REPORT'}
                                 </button>
+                            </div>
+                            {/* 週報的 Checkbox */}
+                            <div style={{ marginBottom: '15px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <input
+                                        type="checkbox"
+                                        id="weekly_subscribed"
+                                        checked={userInfo.weekly_report_subscribed || false}
+                                        onChange={(e) => setUserInfo({ ...userInfo, weekly_report_subscribed: e.target.checked })}
+                                        disabled={saving || sendingReport}
+                                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                    />
+                                    <label htmlFor="weekly_subscribed" style={{ fontSize: '0.7rem', cursor: 'pointer' }}>
+                                        SUBSCRIBE TO AUTOMATIC WEEKLY EMAIL REPORT
+                                    </label>
+                                </div>
+
+                                {/* 💡 只有從「未訂閱 ➔ 切換為訂閱」時才顯示提醒小字 */}
+                                {!initialSubscribed && userInfo.weekly_report_subscribed && (
+                                    <p style={{
+                                        fontSize: '0.55rem',
+                                        color: 'var(--pixel-warning, #e67e22)',
+                                        marginTop: '6px',
+                                        marginLeft: '26px',
+                                        marginBottom: 0
+                                    }}>
+                                        ⚠️ REMEMBER TO CLICK "SAVE CONFIG" BELOW TO APPLY YOUR SUBSCRIPTION.
+                                    </p>
+                                )}
                             </div>
                         </div>
 

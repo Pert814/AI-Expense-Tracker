@@ -26,6 +26,7 @@ class UserUpdate(BaseModel):
     currency: Optional[str] = None
     stats_start_date: Optional[str] = None  # Format: YYYY-MM-DD
     weekly_report_email: Optional[str] = None
+    weekly_report_subscribed: Optional[bool] = None
 
 # Parse expense request model
 class ParseRequestModel(BaseModel):
